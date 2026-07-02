@@ -1,0 +1,1458 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_healthCheck",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/v1/chains": {
+      "get": {
+        "operationId": "ChainsController_getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Chains"
+        ]
+      }
+    },
+    "/v1/admin/settings": {
+      "get": {
+        "operationId": "SettingsController_get",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Get live tunable settings",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "SettingsController_update",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Update live tunable settings (partial)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/auth/status": {
+      "get": {
+        "operationId": "AuthController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check whether an admin user has been registered",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current admin user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/register": {
+      "post": {
+        "description": "Only succeeds once. Returns 403 if an admin already exists.",
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "403": {
+            "description": "Admin user already registered"
+          }
+        },
+        "summary": "Register admin user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/setup": {
+      "post": {
+        "operationId": "AuthController_totpSetup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpSetupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Setup TOTP",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/verify": {
+      "post": {
+        "operationId": "AuthController_totpVerify",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or TOTP code"
+          }
+        },
+        "summary": "Verify TOTP and complete setup",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Login as admin",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/update": {
+      "patch": {
+        "operationId": "AuthController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or missing token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update admin email or password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/invoices": {
+      "post": {
+        "description": "Generates a unique XMR subaddress, locks the XMR/fiat rate, and returns the invoice. Expiry timer freezes once an incoming tx is detected.",
+        "operationId": "InvoicesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or expiry exceeds maximum"
+          },
+          "401": {
+            "description": "Missing or invalid X-Api-Key header"
+          },
+          "503": {
+            "description": "Price feed unavailable"
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          }
+        ],
+        "summary": "Create invoice",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/v1/invoices/{id}": {
+      "get": {
+        "operationId": "InvoicesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "6630f0c8a1b2c3d4e5f6a7b8",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Api-Key header"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          }
+        ],
+        "summary": "Get invoice by id",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/v1/admin/wallet": {
+      "get": {
+        "operationId": "AdminController_getInfo",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletInfoResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Get wallet info",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/stats": {
+      "get": {
+        "operationId": "AdminController_getStats",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Get stats",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/invoices": {
+      "get": {
+        "operationId": "AdminController_listInvoices",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "xmr",
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "seen",
+                "confirmed",
+                "underpaid",
+                "expired",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "List invoices",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}": {
+      "get": {
+        "operationId": "AdminController_getInvoice",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "List invoices",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/payout": {
+      "post": {
+        "operationId": "AdminController_payout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid address or no spendable balance"
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Sweep full Spark balance to address",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/health/live": {
+      "get": {
+        "operationId": "HealthController_live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/health/ready": {
+      "get": {
+        "operationId": "HealthController_ready",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Readiness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/health/synced": {
+      "get": {
+        "operationId": "HealthController_synced",
+        "parameters": [
+          {
+            "name": "chain",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xmr",
+                "firo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sync probe",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Payments API",
+    "description": "REST API for payment processor",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "api-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      },
+      "admin-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Admin-Api-Key"
+      },
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "SettingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "confirmationDepth": {
+            "type": "number",
+            "minimum": 1
+          },
+          "invoiceDefaultExpirySec": {
+            "type": "number",
+            "minimum": 60,
+            "description": "Seconds"
+          },
+          "invoiceMaxExpirySec": {
+            "type": "number",
+            "minimum": 60,
+            "description": "Seconds"
+          },
+          "scannerLockTtlMs": {
+            "type": "number",
+            "minimum": 1000,
+            "description": "Milliseconds"
+          },
+          "syncedThresholdBlocks": {
+            "type": "number",
+            "minimum": 1
+          },
+          "rateCacheTtlMs": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Milliseconds"
+          },
+          "webhookMaxAttempts": {
+            "type": "number",
+            "minimum": 1
+          },
+          "webhookTimeoutMs": {
+            "type": "number",
+            "minimum": 1000,
+            "description": "Milliseconds"
+          }
+        },
+        "required": [
+          "confirmationDepth",
+          "invoiceDefaultExpirySec",
+          "invoiceMaxExpirySec",
+          "scannerLockTtlMs",
+          "syncedThresholdBlocks",
+          "rateCacheTtlMs",
+          "webhookMaxAttempts",
+          "webhookTimeoutMs"
+        ]
+      },
+      "UpdateSettingsDto": {
+        "type": "object",
+        "properties": {
+          "confirmationDepth": {
+            "type": "number",
+            "minimum": 1
+          },
+          "invoiceDefaultExpirySec": {
+            "type": "number",
+            "minimum": 60
+          },
+          "invoiceMaxExpirySec": {
+            "type": "number",
+            "minimum": 60
+          },
+          "scannerLockTtlMs": {
+            "type": "number",
+            "minimum": 1000
+          },
+          "syncedThresholdBlocks": {
+            "type": "number",
+            "minimum": 1
+          },
+          "rateCacheTtlMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "webhookMaxAttempts": {
+            "type": "number",
+            "minimum": 1
+          },
+          "webhookTimeoutMs": {
+            "type": "number",
+            "minimum": 1000
+          }
+        }
+      },
+      "StatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "registered": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "registered"
+        ]
+      },
+      "MeResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "strongpassword",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "TotpSetupDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "TotpSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "qrCode": {
+            "type": "string"
+          },
+          "backupCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "qrCode",
+          "backupCodes"
+        ]
+      },
+      "TotpVerifyDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "token"
+        ]
+      },
+      "AccessTokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "strongpassword"
+          },
+          "token": {
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "token"
+        ]
+      },
+      "UpdateDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Current password"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "New password",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UpdateResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "CreateInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "example": "xmr",
+            "description": "Chain to create the invoice on",
+            "enum": [
+              "xmr",
+              "firo"
+            ]
+          },
+          "amountAtomic": {
+            "type": "string",
+            "example": "123456789012",
+            "description": "Amount owed in atomic units (string, BigInt-compatible). Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8)."
+          },
+          "fiatCurrency": {
+            "type": "string",
+            "example": "USD",
+            "description": "Fiat currency to record equivalent at lock time (informational only). Defaults to USD.",
+            "minLength": 3,
+            "maxLength": 8
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "example": 1200,
+            "description": "Expiry in seconds (default 20 min)",
+            "minimum": 60
+          },
+          "confirmationsRequired": {
+            "type": "number",
+            "example": 3,
+            "description": "Override confirmations required. Defaults to CONFIRMATION_DEPTH.",
+            "minimum": 1
+          },
+          "webhookUrl": {
+            "type": "string",
+            "example": "https://webhook.site/xmr/hook",
+            "description": "Webhook callback URL"
+          },
+          "metadata": {
+            "type": "object",
+            "example": {
+              "orderId": "ORD-1234"
+            },
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "chain",
+          "amountAtomic"
+        ]
+      },
+      "InvoiceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "6630f0c8a1b2c3d4e5f6a7b8"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "xmr",
+              "firo"
+            ],
+            "example": "xmr"
+          },
+          "asset": {
+            "type": "string",
+            "enum": [
+              "xmr",
+              "firo"
+            ],
+            "example": "xmr"
+          },
+          "assetDecimals": {
+            "type": "number",
+            "example": 12,
+            "description": "Decimals for atomic conversion"
+          },
+          "address": {
+            "type": "string",
+            "example": "5A1jR...subaddress...xyz",
+            "description": "Unique receiving address for this invoice"
+          },
+          "addressIndex": {
+            "type": "number",
+            "example": 1,
+            "description": "Address index (XMR subaddress index or HD derivation index)"
+          },
+          "amountAtomic": {
+            "type": "string",
+            "example": "123456789012",
+            "description": "Amount owed in atomic units (string)"
+          },
+          "amountFiat": {
+            "type": "number",
+            "example": 19.99
+          },
+          "fiatCurrency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "rate": {
+            "type": "number",
+            "example": 0.00617,
+            "description": "Asset per 1 unit fiat at lock time"
+          },
+          "rateLockedAt": {
+            "type": "string",
+            "example": "2026-05-06T12:34:56.000Z"
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-05-06T12:54:56.000Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "seen",
+              "confirmed",
+              "underpaid",
+              "expired",
+              "cancelled"
+            ],
+            "example": "pending"
+          },
+          "confirmationsRequired": {
+            "type": "number",
+            "example": 1
+          },
+          "confirmations": {
+            "type": "number",
+            "example": 0
+          },
+          "receivedAtomic": {
+            "type": "string",
+            "example": "0",
+            "description": "Total atomic units received across all payments"
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "example": "2026-05-06T12:36:01.000Z"
+          },
+          "paidAt": {
+            "type": "string",
+            "example": "2026-05-06T12:38:14.000Z"
+          },
+          "webhookUrl": {
+            "type": "string",
+            "example": "https://merchant.example.com/hook"
+          },
+          "chainData": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Chain-specific data (e.g. txHash, blockNumber for EVM)"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-05-06T12:34:56.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "chain",
+          "asset",
+          "assetDecimals",
+          "address",
+          "addressIndex",
+          "amountAtomic",
+          "amountFiat",
+          "fiatCurrency",
+          "rate",
+          "rateLockedAt",
+          "expiresAt",
+          "status",
+          "confirmationsRequired",
+          "confirmations",
+          "receivedAtomic",
+          "createdAt"
+        ]
+      },
+      "WalletInfoResponseDto": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "xmr",
+              "firo"
+            ],
+            "example": "xmr"
+          },
+          "primaryAddress": {
+            "type": "string",
+            "example": "5A1..."
+          },
+          "viewKey": {
+            "type": "string",
+            "example": "a1b2c3...64hex",
+            "description": "Private view key (read-only; cannot spend funds)"
+          },
+          "restoreHeight": {
+            "type": "number",
+            "example": 1234567
+          },
+          "walletHeight": {
+            "type": "number",
+            "example": 1234890
+          },
+          "daemonHeight": {
+            "type": "number",
+            "example": 1234892
+          },
+          "synced": {
+            "type": "boolean",
+            "example": true
+          },
+          "blockHeight": {
+            "type": "number",
+            "example": 1322631
+          },
+          "availableBalance": {
+            "type": "number",
+            "example": 100000000
+          },
+          "unconfirmedBalance": {
+            "type": "number",
+            "example": 0
+          },
+          "hdMasterKeyId": {
+            "type": "string",
+            "example": "fdec8781a3c6357dd808379283238a9e649ab5dd"
+          },
+          "keypoolSize": {
+            "type": "number",
+            "example": 100
+          }
+        },
+        "required": [
+          "chain"
+        ]
+      },
+      "StatsResponseDto": {
+        "type": "object",
+        "properties": {
+          "confirmedVolumeAtomic": {
+            "type": "string",
+            "example": "500000000",
+            "description": "Total confirmed volume in atomic units"
+          },
+          "balance": {
+            "type": "number",
+            "example": 1.5,
+            "description": "Wallet balance (Firo only)"
+          }
+        },
+        "required": [
+          "confirmedVolumeAtomic"
+        ]
+      },
+      "InvoiceListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 100
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "PayoutDto": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "example": "sm1wp..."
+          }
+        },
+        "required": [
+          "address"
+        ]
+      },
+      "PayoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "txid": {
+            "type": "string",
+            "example": "aee3b507ef84950062776442942668b6..."
+          }
+        },
+        "required": [
+          "txid"
+        ]
+      },
+      "LiveResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ReadyResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok",
+            "enum": [
+              "ok",
+              "degraded"
+            ]
+          },
+          "checks": {
+            "type": "object",
+            "example": {
+              "database": {
+                "ok": true
+              },
+              "wallet": {
+                "ok": true,
+                "detail": "height=1234567"
+              },
+              "daemon": {
+                "ok": true,
+                "detail": "http://monerod:38081"
+              }
+            }
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ]
+      },
+      "SyncedResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok",
+            "enum": [
+              "ok",
+              "syncing"
+            ]
+          },
+          "walletHeight": {
+            "type": "number",
+            "example": 1234890
+          },
+          "daemonHeight": {
+            "type": "number",
+            "example": 1234892
+          },
+          "behind": {
+            "type": "number",
+            "example": 2,
+            "description": "daemonHeight - walletHeight"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "walletHeight",
+          "daemonHeight",
+          "behind"
+        ]
+      }
+    }
+  }
+}

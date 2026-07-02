@@ -1,0 +1,10 @@
+{
+  "extends": "@mintit/tsconfig/base.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "declaration": true,
+    "module": "CommonJS"
+  },
+  "include": ["index.ts"]
+}
