@@ -2,7 +2,7 @@
 
 ---
 
-### A self-hosted payment processor for privacy-focused cryptocurrencies. Accepts payments in fixed fiat amounts and notifies your application via webhooks. Currently supports Firo and Monero. Currently in progress.
+### A self-hosted payment processor for privacy-focused cryptocurrencies. Accepts payments in fixed fiat amounts and notifies your application via webhooks. Currently supports Firo and Monero, work in progress.
 
 ## 📚 Current docs: **[mintit.dev](https://mintit.dev)**
 
