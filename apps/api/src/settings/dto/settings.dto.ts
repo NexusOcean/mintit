@@ -1,7 +1,21 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, Min } from 'class-validator';
 
-export class SettingsResponseDto {
+export class GlobalSettingsResponseDto {
+  @ApiProperty({ minimum: 0, description: 'Milliseconds' })
+  rateCacheTtlMs!: number;
+
+  @ApiProperty({ minimum: 1 })
+  webhookMaxAttempts!: number;
+
+  @ApiProperty({ minimum: 1000, description: 'Milliseconds' })
+  webhookTimeoutMs!: number;
+
+  @ApiProperty({ minimum: 0, description: 'Milliseconds' })
+  webhookDispatchIntervalMs!: number;
+}
+
+export class SettingsResponseDto extends GlobalSettingsResponseDto {
   @ApiProperty({ minimum: 1 })
   confirmationDepth!: number;
 
@@ -16,15 +30,32 @@ export class SettingsResponseDto {
 
   @ApiProperty({ minimum: 1 })
   syncedThresholdBlocks!: number;
+}
 
-  @ApiProperty({ minimum: 0, description: 'Milliseconds' })
-  rateCacheTtlMs!: number;
+export class UpdateGlobalSettingsDto {
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  rateCacheTtlMs?: number;
 
-  @ApiProperty({ minimum: 1 })
-  webhookMaxAttempts!: number;
+  @ApiPropertyOptional({ minimum: 1 })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  webhookMaxAttempts?: number;
 
-  @ApiProperty({ minimum: 1000, description: 'Milliseconds' })
-  webhookTimeoutMs!: number;
+  @ApiPropertyOptional({ minimum: 1000 })
+  @IsInt()
+  @Min(1000)
+  @IsOptional()
+  webhookTimeoutMs?: number;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  webhookDispatchIntervalMs?: number;
 }
 
 export class UpdateSettingsDto {
@@ -57,22 +88,4 @@ export class UpdateSettingsDto {
   @Min(1)
   @IsOptional()
   syncedThresholdBlocks?: number;
-
-  @ApiPropertyOptional({ minimum: 0 })
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  rateCacheTtlMs?: number;
-
-  @ApiPropertyOptional({ minimum: 1 })
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  webhookMaxAttempts?: number;
-
-  @ApiPropertyOptional({ minimum: 1000 })
-  @IsInt()
-  @Min(1000)
-  @IsOptional()
-  webhookTimeoutMs?: number;
 }

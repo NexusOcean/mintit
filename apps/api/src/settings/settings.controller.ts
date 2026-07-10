@@ -8,7 +8,12 @@ import {
 } from '@nestjs/swagger';
 import { AdminKeyGuard } from '../auth/admin-key.guard';
 import { SettingsService } from './settings.service';
-import { SettingsResponseDto, UpdateSettingsDto } from './dto/settings.dto';
+import {
+  GlobalSettingsResponseDto,
+  SettingsResponseDto,
+  UpdateGlobalSettingsDto,
+  UpdateSettingsDto,
+} from './dto/settings.dto';
 import { Chain } from '@mintit/types';
 
 @ApiTags('admin')
@@ -21,15 +26,31 @@ import { Chain } from '@mintit/types';
 export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
 
+  @Get('global')
+  @ApiOperation({ summary: 'Get global settings' })
+  @ApiOkResponse({ type: GlobalSettingsResponseDto })
+  getGlobal(): GlobalSettingsResponseDto {
+    return this.settings.getGlobal();
+  }
+
+  @Put('global')
+  @ApiOperation({ summary: 'Update global settings (partial)' })
+  @ApiOkResponse({ type: GlobalSettingsResponseDto })
+  async updateGlobal(
+    @Body() dto: UpdateGlobalSettingsDto,
+  ): Promise<GlobalSettingsResponseDto> {
+    return this.settings.updateGlobal(dto);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Get live tunable settings' })
+  @ApiOperation({ summary: 'Get chain settings' })
   @ApiOkResponse({ type: SettingsResponseDto })
   get(@Query('chain') chain: Chain): SettingsResponseDto {
     return this.settings.getAll(chain);
   }
 
   @Put()
-  @ApiOperation({ summary: 'Update live tunable settings (partial)' })
+  @ApiOperation({ summary: 'Update chain settings (partial)' })
   @ApiOkResponse({ type: SettingsResponseDto })
   async update(
     @Query('chain') chain: Chain,

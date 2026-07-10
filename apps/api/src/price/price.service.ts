@@ -8,7 +8,6 @@ import BigNumber from 'bignumber.js';
 import { SettingsService } from '../settings/settings.service';
 import { RATE_PROVIDER, type RateProvider } from './rate-provider.interface';
 import type { PriceQuote } from './price.types';
-import { Chain } from '@mintit/types';
 
 @Injectable()
 export class PriceService {
@@ -16,7 +15,7 @@ export class PriceService {
   private cache = new Map<string, PriceQuote>();
 
   constructor(
-    @Inject(RATE_PROVIDER) private readonly rates: RateProvider,
+    @Inject(RATE_PROVIDER) private readonly providers: RateProvider[],
     private readonly settings: SettingsService,
   ) {}
 
@@ -24,37 +23,44 @@ export class PriceService {
     assetSymbol: string,
     fiatCurrency: string,
   ): Promise<PriceQuote> {
-    const key = `${assetSymbol.toUpperCase()}:${fiatCurrency.toUpperCase()}`;
-    const ttl = this.settings.get(Chain.Xmr, 'rateCacheTtlMs');
+    const asset = assetSymbol.toUpperCase();
+    const fiat = fiatCurrency.toUpperCase();
+    const key = `${asset}:${fiat}`;
+    const { rateCacheTtlMs } = this.settings.getGlobal();
     const cached = this.cache.get(key);
-    if (cached && Date.now() - cached.fetchedAt.getTime() < ttl) {
+
+    if (cached && Date.now() - cached.fetchedAt.getTime() < rateCacheTtlMs) {
       return cached;
     }
 
-    try {
-      const fiatPerAsset = await this.rates.getRate(
-        assetSymbol.toUpperCase(),
-        fiatCurrency.toUpperCase(),
-      );
-      const assetPerFiat = new BigNumber(1).dividedBy(fiatPerAsset).toNumber();
-      const fresh: PriceQuote = {
-        fiatPerAsset,
-        assetPerFiat,
-        fiatCurrency: fiatCurrency.toUpperCase(),
-        fetchedAt: new Date(),
-        source: this.rates.source,
-      };
-      this.cache.set(key, fresh);
-      return fresh;
-    } catch (err) {
-      if (cached) {
+    for (const provider of this.providers) {
+      try {
+        const fiatPerAsset = await provider.getRate(asset, fiat);
+        const assetPerFiat = new BigNumber(1)
+          .dividedBy(fiatPerAsset)
+          .toNumber();
+        const fresh: PriceQuote = {
+          fiatPerAsset,
+          assetPerFiat,
+          fiatCurrency: fiat,
+          fetchedAt: new Date(),
+          source: provider.source,
+        };
+        this.cache.set(key, fresh);
+        return fresh;
+      } catch (err) {
         this.log.warn(
-          `Rate fetch failed (${(err as Error).message}); serving stale quote for ${key}`,
+          `Provider ${provider.source} failed for ${key}: ${(err as Error).message} — trying next`,
         );
-        return cached;
       }
-      throw new ServiceUnavailableException('Price feed unavailable');
     }
+
+    if (cached) {
+      this.log.warn(`All providers failed for ${key}; serving stale quote`);
+      return cached;
+    }
+
+    throw new ServiceUnavailableException('Price feed unavailable');
   }
 
   convertFiatToAtomic(

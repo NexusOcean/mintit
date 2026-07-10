@@ -35,7 +35,7 @@ export class CmcRateProvider implements RateProvider {
 
   async getRate(asset: string, fiat: string): Promise<number> {
     const apiKey = this.config.get('CMC_API_KEY', { infer: true });
-    const baseUrl = this.config.get('CMC_BASE_URL', { infer: true });
+    const baseUrl = 'https://pro-api.coinmarketcap.com';
     const url = `${baseUrl}/v2/cryptocurrency/quotes/latest`;
 
     const response = await firstValueFrom(

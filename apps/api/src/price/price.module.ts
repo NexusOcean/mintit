@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import {
-  RateProvider as RateProviderEnv,
-  type EnvironmentVariables,
-} from '../config/env.validation';
+import type { EnvironmentVariables } from '../config/env.validation';
 import { SettingsModule } from '../settings/settings.module';
 import { PriceService } from './price.service';
 import { CmcRateProvider } from './providers/cmc.provider';
+import { CoinGeckoRateProvider } from './providers/coingecko.provider';
 import { RATE_PROVIDER, type RateProvider } from './rate-provider.interface';
 
 @Module({
@@ -20,24 +18,19 @@ import { RATE_PROVIDER, type RateProvider } from './rate-provider.interface';
   providers: [
     PriceService,
     CmcRateProvider,
+    CoinGeckoRateProvider,
     {
       provide: RATE_PROVIDER,
-      inject: [ConfigService, CmcRateProvider],
+      inject: [ConfigService, CoinGeckoRateProvider, CmcRateProvider],
       useFactory: (
         config: ConfigService<EnvironmentVariables, true>,
+        coinGecko: CoinGeckoRateProvider,
         cmc: CmcRateProvider,
-      ): RateProvider => {
-        const selected = config.get('RATE_PROVIDER', { infer: true });
-        switch (selected) {
-          case RateProviderEnv.Cmc:
-            return cmc;
-          default: {
-            const exhaustive: never = selected;
-            throw new Error(
-              `Unsupported rate provider: ${exhaustive as string}`,
-            );
-          }
-        }
+      ): RateProvider[] => {
+        const providers: RateProvider[] = [coinGecko];
+        const cmcKey = config.get('CMC_API_KEY', { infer: true });
+        if (cmcKey) providers.push(cmc);
+        return providers;
       },
     },
   ],

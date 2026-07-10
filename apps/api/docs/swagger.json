@@ -29,6 +29,74 @@
         ]
       }
     },
+    "/v1/admin/settings/global": {
+      "get": {
+        "operationId": "SettingsController_getGlobal",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlobalSettingsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Get global settings",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "SettingsController_updateGlobal",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGlobalSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlobalSettingsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid X-Admin-Api-Key header"
+          }
+        },
+        "security": [
+          {
+            "admin-key": []
+          }
+        ],
+        "summary": "Update global settings (partial)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/v1/admin/settings": {
       "get": {
         "operationId": "SettingsController_get",
@@ -66,7 +134,7 @@
             "admin-key": []
           }
         ],
-        "summary": "Get live tunable settings",
+        "summary": "Get chain settings",
         "tags": [
           "admin"
         ]
@@ -117,7 +185,7 @@
             "admin-key": []
           }
         ],
-        "summary": "Update live tunable settings (partial)",
+        "summary": "Update chain settings (partial)",
         "tags": [
           "admin"
         ]
@@ -798,9 +866,79 @@
       }
     },
     "schemas": {
+      "GlobalSettingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "rateCacheTtlMs": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Milliseconds"
+          },
+          "webhookMaxAttempts": {
+            "type": "number",
+            "minimum": 1
+          },
+          "webhookTimeoutMs": {
+            "type": "number",
+            "minimum": 1000,
+            "description": "Milliseconds"
+          },
+          "webhookDispatchIntervalMs": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Milliseconds"
+          }
+        },
+        "required": [
+          "rateCacheTtlMs",
+          "webhookMaxAttempts",
+          "webhookTimeoutMs",
+          "webhookDispatchIntervalMs"
+        ]
+      },
+      "UpdateGlobalSettingsDto": {
+        "type": "object",
+        "properties": {
+          "rateCacheTtlMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "webhookMaxAttempts": {
+            "type": "number",
+            "minimum": 1
+          },
+          "webhookTimeoutMs": {
+            "type": "number",
+            "minimum": 1000
+          },
+          "webhookDispatchIntervalMs": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
       "SettingsResponseDto": {
         "type": "object",
         "properties": {
+          "rateCacheTtlMs": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Milliseconds"
+          },
+          "webhookMaxAttempts": {
+            "type": "number",
+            "minimum": 1
+          },
+          "webhookTimeoutMs": {
+            "type": "number",
+            "minimum": 1000,
+            "description": "Milliseconds"
+          },
+          "webhookDispatchIntervalMs": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Milliseconds"
+          },
           "confirmationDepth": {
             "type": "number",
             "minimum": 1
@@ -823,31 +961,18 @@
           "syncedThresholdBlocks": {
             "type": "number",
             "minimum": 1
-          },
-          "rateCacheTtlMs": {
-            "type": "number",
-            "minimum": 0,
-            "description": "Milliseconds"
-          },
-          "webhookMaxAttempts": {
-            "type": "number",
-            "minimum": 1
-          },
-          "webhookTimeoutMs": {
-            "type": "number",
-            "minimum": 1000,
-            "description": "Milliseconds"
           }
         },
         "required": [
+          "rateCacheTtlMs",
+          "webhookMaxAttempts",
+          "webhookTimeoutMs",
+          "webhookDispatchIntervalMs",
           "confirmationDepth",
           "invoiceDefaultExpirySec",
           "invoiceMaxExpirySec",
           "scannerLockTtlMs",
-          "syncedThresholdBlocks",
-          "rateCacheTtlMs",
-          "webhookMaxAttempts",
-          "webhookTimeoutMs"
+          "syncedThresholdBlocks"
         ]
       },
       "UpdateSettingsDto": {
@@ -872,18 +997,6 @@
           "syncedThresholdBlocks": {
             "type": "number",
             "minimum": 1
-          },
-          "rateCacheTtlMs": {
-            "type": "number",
-            "minimum": 0
-          },
-          "webhookMaxAttempts": {
-            "type": "number",
-            "minimum": 1
-          },
-          "webhookTimeoutMs": {
-            "type": "number",
-            "minimum": 1000
           }
         }
       },

@@ -71,6 +71,8 @@ export default function InvoicesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['invoices', chain, status, page],
     queryFn: () => fetchInvoices(chain, status, page),
+    refetchInterval: 60_000,
+    enabled: !!chain,
   });
 
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 1;

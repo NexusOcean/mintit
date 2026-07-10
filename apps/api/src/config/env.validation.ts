@@ -121,17 +121,11 @@ export class EnvironmentVariables {
   @IsOptional()
   FIRO_RPC_PROTOCOL: string = 'http';
 
-  // --- Pricing ---
-  @IsEnum(RateProvider)
-  @IsOptional()
-  RATE_PROVIDER: RateProvider = RateProvider.Cmc;
+  // --- Additional Pricing ---
 
   @IsString()
-  CMC_API_KEY!: string;
-
-  @IsUrl({ require_tld: true, require_protocol: true })
   @IsOptional()
-  CMC_BASE_URL: string = 'https://pro-api.coinmarketcap.com';
+  CMC_API_KEY?: string;
 
   // --- API auth ---
   @IsString()

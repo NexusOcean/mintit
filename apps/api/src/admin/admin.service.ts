@@ -69,6 +69,8 @@ export class AdminService {
       this.invoiceModel.countDocuments(filter),
     ]);
 
+    console.log(docs);
+
     const data = docs.map((doc) => ({
       id: doc._id.toString(),
       chain: doc.chain,

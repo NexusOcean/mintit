@@ -93,13 +93,17 @@ export interface HealthSyncedDto {
   detail?: string;
 }
 
-export interface SettingsDto {
+export interface GlobalSettingsDto {
+  rateCacheTtlMs: number;
+  webhookMaxAttempts: number;
+  webhookTimeoutMs: number;
+  webhookDispatchIntervalMs: number;
+}
+
+export interface SettingsDto extends GlobalSettingsDto {
   confirmationDepth: number;
   invoiceDefaultExpirySec: number;
   invoiceMaxExpirySec: number;
   scannerLockTtlMs: number;
   syncedThresholdBlocks: number;
-  rateCacheTtlMs: number;
-  webhookMaxAttempts: number;
-  webhookTimeoutMs: number;
 }
