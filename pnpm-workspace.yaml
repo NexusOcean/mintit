@@ -8,4 +8,4 @@ allowBuilds:
   sharp: true
   unrs-resolver: false
 minimumReleaseAgeExclude:
-  - '@nexusocean/firo-rpc@0.5.0'
+  - '@nexusocean/firo-rpc@0.5.0 || 0.5.1'

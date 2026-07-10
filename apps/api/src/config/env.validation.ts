@@ -142,6 +142,10 @@ export class EnvironmentVariables {
   @MinLength(16)
   ADMIN_API_KEY!: string;
 
+  @IsString()
+  @IsOptional()
+  DEMO_ADMIN_TOTP?: string;
+
   // --- Webhooks ---
   @IsString()
   WEBHOOK_SIGNING_SECRET!: string;

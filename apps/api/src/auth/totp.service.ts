@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TOTP } from '@otplib/totp';
@@ -7,6 +8,7 @@ import { ScureBase32Plugin } from '@otplib/plugin-base32-scure';
 import * as qrcode from 'qrcode';
 import * as argon2 from 'argon2';
 import { User } from './schemas/user.schema';
+import type { EnvironmentVariables } from '../config/env.validation';
 
 @Injectable()
 export class TotpService {
@@ -15,9 +17,18 @@ export class TotpService {
     base32: new ScureBase32Plugin(),
   });
 
+  private readonly demoAdminTotp?: string;
+
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-  ) {}
+    configService: ConfigService<EnvironmentVariables, true>,
+  ) {
+    this.demoAdminTotp = configService.get('DEMO_ADMIN_TOTP');
+  }
+
+  private isDemoTotp(token: string): boolean {
+    return Boolean(this.demoAdminTotp) && token === this.demoAdminTotp;
+  }
 
   async setup(
     email: string,
@@ -60,6 +71,14 @@ export class TotpService {
     const passwordValid = await argon2.verify(user.password, password);
     if (!passwordValid) throw new UnauthorizedException('Invalid credentials');
 
+    if (this.isDemoTotp(token)) {
+      return await this.userModel.findByIdAndUpdate(
+        user._id,
+        { isValid: true },
+        { returnDocument: 'after' },
+      );
+    }
+
     if (!user.totpSecret) throw new UnauthorizedException('TOTP not setup');
 
     const result = await this.totp.verify(token, { secret: user.totpSecret });
@@ -77,10 +96,12 @@ export class TotpService {
       .findById(userId)
       .select('+totpSecret +backupCodes +lastUsedTotp');
 
-    if (!user?.totpSecret) return false;
-    console.log(token);
+    if (this.isDemoTotp(token)) {
+      return true;
+    }
 
-    console.log(user.lastUsedTotp);
+    if (!user?.totpSecret) return false;
+
     if (user.lastUsedTotp === token) {
       return false;
     }

@@ -28,7 +28,6 @@ import {
   StatusResponseDto,
   TotpSetupResponseDto,
 } from './dto/auth-response.dto';
-import { AdminKeyGuard } from './admin-key.guard';
 import { GetUser } from '../decorators/get-user';
 import { PayloadDto } from './dto/payload.dto';
 import { TotpService } from './totp.service';

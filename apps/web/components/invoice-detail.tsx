@@ -97,7 +97,7 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
       'Amount (Fiat)',
       `${invoice.amountFiat.toFixed(2)} ${invoice.fiatCurrency}`,
     ],
-    ['Rate', `${invoice.rate.toFixed(2)} ${ticker}/${invoice.fiatCurrency}`],
+    ['Rate', `${invoice.rate.toFixed(6)} ${ticker}/${invoice.fiatCurrency}`],
     ['Status', invoice.status],
     [
       'Confirmations',

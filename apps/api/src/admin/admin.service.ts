@@ -42,8 +42,10 @@ export class AdminService {
       : '0';
 
     const wallet = await this.chains.get(chain).getWalletInfo();
+    console.log('availableBalance raw:', wallet.availableBalance);
     const balance =
       chain === Chain.Firo ? (wallet.availableBalance ?? 0) / 1e8 : 0;
+    console.log('balance computed:', balance);
 
     return { confirmedVolumeAtomic, balance };
   }
