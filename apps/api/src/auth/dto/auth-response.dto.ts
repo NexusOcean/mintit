@@ -24,6 +24,9 @@ export class TotpSetupResponseDto {
   @ApiProperty()
   qrCode: string;
 
+  @ApiProperty()
+  secret: string;
+
   @ApiProperty({ type: [String] })
   backupCodes: string[];
 }

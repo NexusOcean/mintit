@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
-  ApiSecurity,
+  ApiBearerAuth,
   ApiOperation,
   ApiOkResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AdminKeyGuard } from '../auth/admin-key.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SettingsService } from './settings.service';
 import {
   GlobalSettingsResponseDto,
@@ -17,12 +17,12 @@ import {
 import { Chain } from '@mintit/types';
 
 @ApiTags('admin')
-@ApiSecurity('admin-key')
+@ApiBearerAuth()
 @ApiUnauthorizedResponse({
-  description: 'Missing or invalid X-Admin-Api-Key header',
+  description: 'Missing or invalid Bearer token',
 })
 @Controller('admin/settings')
-@UseGuards(AdminKeyGuard)
+@UseGuards(JwtAuthGuard)
 export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
 

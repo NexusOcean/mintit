@@ -10,14 +10,14 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiSecurity,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiUnauthorizedResponse,
   ApiQuery,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { AdminKeyGuard } from '../auth/admin-key.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { WalletInfoResponseDto } from './dto/wallet-info.dto';
 import {
   InvoiceListQueryDto,
@@ -29,12 +29,12 @@ import { PayoutDto, PayoutResponseDto } from './dto/payout.dto';
 import { InvoiceResponseDto } from '../invoices/dto/invoice-response.dto';
 
 @ApiTags('admin')
-@ApiSecurity('admin-key')
+@ApiBearerAuth()
 @ApiUnauthorizedResponse({
-  description: 'Missing or invalid X-Admin-Api-Key header',
+  description: 'Missing or invalid Bearer token',
 })
 @Controller('admin')
-@UseGuards(AdminKeyGuard)
+@UseGuards(JwtAuthGuard)
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
@@ -67,7 +67,7 @@ export class AdminController {
   @Get('invoices/:id')
   @ApiOperation({ summary: 'List invoices' })
   @ApiOkResponse({ type: InvoiceResponseDto })
-  getInvoice(@Param() id: string): Promise<InvoiceResponseDto> {
+  getInvoice(@Param('id') id: string): Promise<InvoiceResponseDto> {
     return this.admin.getInvoice(id);
   }
 

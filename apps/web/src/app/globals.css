@@ -1,0 +1,21 @@
+:root {
+  --font-space-mono: 'Space Mono', monospace;
+  --font-space-grotesk: 'Space Grotesk', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #10141a;
+  color: #f2f5f7;
+  font-family: var(--font-space-grotesk), sans-serif;
+}

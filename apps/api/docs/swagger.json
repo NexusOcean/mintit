@@ -45,12 +45,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Get global settings",
@@ -83,12 +83,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Update global settings (partial)",
@@ -126,12 +126,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Get chain settings",
@@ -177,12 +177,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Update chain settings (partial)",
@@ -536,12 +536,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Get wallet info",
@@ -579,12 +579,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Get stats",
@@ -659,12 +659,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "List invoices",
@@ -676,7 +676,16 @@
     "/v1/admin/invoices/{id}": {
       "get": {
         "operationId": "AdminController_getInvoice",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -689,12 +698,12 @@
             }
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "List invoices",
@@ -732,12 +741,12 @@
             "description": "Invalid address or no spendable balance"
           },
           "401": {
-            "description": "Missing or invalid X-Admin-Api-Key header"
+            "description": "Missing or invalid Bearer token"
           }
         },
         "security": [
           {
-            "admin-key": []
+            "bearer": []
           }
         ],
         "summary": "Sweep full Spark balance to address",
@@ -1064,6 +1073,9 @@
           "qrCode": {
             "type": "string"
           },
+          "secret": {
+            "type": "string"
+          },
           "backupCodes": {
             "type": "array",
             "items": {
@@ -1073,6 +1085,7 @@
         },
         "required": [
           "qrCode",
+          "secret",
           "backupCodes"
         ]
       },
