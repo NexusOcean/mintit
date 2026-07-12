@@ -49,21 +49,42 @@ export class InvoicesService {
     const { asset, decimals, symbol } = CHAIN_CONFIG[chain];
     const fiatCurrency = (dto.fiatCurrency ?? 'USD').toUpperCase();
 
+    let amountAtomic = '';
     let amountFiat = 0;
     let rate = 0;
     let rateLockedAt = new Date();
-    try {
-      const quote = await this.price.getQuote(symbol, fiatCurrency);
-      const units = new BigNumber(dto.amountAtomic).dividedBy(
-        new BigNumber(10).pow(decimals),
-      );
-      amountFiat = units.multipliedBy(quote.fiatPerAsset).toNumber();
-      rate = quote.assetPerFiat;
-      rateLockedAt = quote.fetchedAt;
-    } catch (err) {
-      this.log.warn(
-        `Price lock skipped: ${(err as Error).message}. Invoice created without fiat record.`,
-      );
+
+    if (dto.amountAtomic) {
+      amountAtomic = dto.amountAtomic;
+      try {
+        const quote = await this.price.getQuote(symbol, fiatCurrency);
+        const units = new BigNumber(amountAtomic).dividedBy(
+          new BigNumber(10).pow(decimals),
+        );
+        amountFiat = units.multipliedBy(quote.fiatPerAsset).toNumber();
+        rate = quote.assetPerFiat;
+        rateLockedAt = quote.fetchedAt;
+      } catch (err) {
+        this.log.warn(
+          `Price lock skipped: ${(err as Error).message}. Invoice created without fiat record.`,
+        );
+      }
+    } else {
+      try {
+        const quote = await this.price.getQuote(symbol, fiatCurrency);
+        amountAtomic = this.price.convertFiatToAtomic(
+          dto.fiatAmount,
+          quote,
+          decimals,
+        );
+        amountFiat = dto.fiatAmount;
+        rate = quote.assetPerFiat;
+        rateLockedAt = quote.fetchedAt;
+      } catch (err) {
+        throw new BadRequestException(
+          `Price feed unavailable, cannot convert fiat amount: ${(err as Error).message}`,
+        );
+      }
     }
 
     const { address, addressIndex } = await this.chains
@@ -78,7 +99,7 @@ export class InvoicesService {
       assetDecimals: decimals,
       address,
       addressIndex,
-      amountAtomic: dto.amountAtomic,
+      amountAtomic,
       amountFiat,
       fiatCurrency,
       rate,

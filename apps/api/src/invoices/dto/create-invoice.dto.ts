@@ -3,11 +3,13 @@ import {
   IsString,
   IsInt,
   IsUrl,
+  IsNumber,
   Length,
   Min,
   IsObject,
   Matches,
   IsEnum,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Chain } from '@mintit/types';
@@ -22,15 +24,26 @@ export class CreateInvoiceDto {
   chain!: Chain;
 
   @ApiProperty({
+    example: 19.99,
+    description:
+      'Amount owed in fiat currency. Required unless amountAtomic is provided.',
+  })
+  @ValidateIf((o) => !o.amountAtomic)
+  @IsNumber()
+  @Min(0.000001)
+  fiatAmount!: number;
+
+  @ApiPropertyOptional({
     example: '123456789012',
     description:
-      'Amount owed in atomic units (string, BigInt-compatible). Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8).',
+      'Override: amount in atomic units (string, BigInt-compatible). When set, fiatAmount is ignored and no rate conversion is performed. Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8).',
   })
+  @IsOptional()
   @IsString()
   @Matches(/^[1-9][0-9]*$/, {
     message: 'amountAtomic must be a positive integer string',
   })
-  amountAtomic!: string;
+  amountAtomic?: string;
 
   @ApiPropertyOptional({
     example: 'USD',
