@@ -8,3 +8,5 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: false
+minimumReleaseAgeExclude:
+  - '@nexusocean/firo-rpc@0.5.2'

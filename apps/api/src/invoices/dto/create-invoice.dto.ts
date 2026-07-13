@@ -1,18 +1,44 @@
 import {
-  IsOptional,
   IsString,
   IsInt,
   IsUrl,
   IsNumber,
-  Length,
   Min,
   IsObject,
   Matches,
   IsEnum,
   ValidateIf,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { Chain } from '@mintit/types';
+
+function ExactlyOneOf(peers: string[], validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'exactlyOneOf',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+      target: (object as { constructor: Function }).constructor,
+      propertyName,
+      constraints: peers,
+      options: validationOptions,
+      validator: {
+        validate(_value: unknown, args: ValidationArguments) {
+          const obj = args.object as Record<string, unknown>;
+          const presentCount = args.constraints.filter(
+            (key) => obj[key] !== undefined && obj[key] !== null,
+          ).length;
+          return presentCount === 1;
+        },
+        defaultMessage(args: ValidationArguments) {
+          return `Exactly one of [${args.constraints.join(', ')}] must be provided`;
+        },
+      },
+    });
+  };
+}
 
 export class CreateInvoiceDto {
   @ApiProperty({
@@ -23,22 +49,25 @@ export class CreateInvoiceDto {
   @IsEnum(Chain)
   chain!: Chain;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 19.99,
     description:
-      'Amount owed in fiat currency. Required unless amountAtomic is provided.',
+      'Amount in fiat (USD). Exactly one of fiatAmount or amountAtomic must be provided. The fiat equivalent is always recorded on the invoice.',
   })
-  @ValidateIf((o) => !o.amountAtomic)
+  @ExactlyOneOf(['fiatAmount', 'amountAtomic'], {
+    message: 'Exactly one of [fiatAmount, amountAtomic] must be provided',
+  })
+  @ValidateIf((o) => o.fiatAmount !== undefined)
   @IsNumber()
-  @Min(0.000001)
-  fiatAmount!: number;
+  @Min(0.01)
+  fiatAmount?: number;
 
   @ApiPropertyOptional({
     example: '123456789012',
     description:
-      'Override: amount in atomic units (string, BigInt-compatible). When set, fiatAmount is ignored and no rate conversion is performed. Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8).',
+      'Amount in atomic units (string, BigInt-compatible). Exactly one of fiatAmount or amountAtomic must be provided. The USD fiat equivalent is recorded on the invoice at creation time. Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8).',
   })
-  @IsOptional()
+  @ValidateIf((o) => o.amountAtomic !== undefined)
   @IsString()
   @Matches(/^[1-9][0-9]*$/, {
     message: 'amountAtomic must be a positive integer string',
@@ -46,23 +75,11 @@ export class CreateInvoiceDto {
   amountAtomic?: string;
 
   @ApiPropertyOptional({
-    example: 'USD',
-    description:
-      'Fiat currency to record equivalent at lock time (informational only). Defaults to USD.',
-    minLength: 3,
-    maxLength: 8,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(3, 8)
-  fiatCurrency?: string;
-
-  @ApiPropertyOptional({
     example: 1200,
     description: 'Expiry in seconds (default 20 min)',
     minimum: 60,
   })
-  @IsOptional()
+  @ValidateIf((o) => o.expiresInSeconds !== undefined)
   @IsInt()
   @Min(60)
   expiresInSeconds?: number;
@@ -73,7 +90,7 @@ export class CreateInvoiceDto {
       'Override confirmations required. Defaults to CONFIRMATION_DEPTH.',
     minimum: 1,
   })
-  @IsOptional()
+  @ValidateIf((o) => o.confirmationsRequired !== undefined)
   @IsInt()
   @Min(1)
   confirmationsRequired?: number;
@@ -82,7 +99,7 @@ export class CreateInvoiceDto {
     example: 'https://webhook.site/xmr/hook',
     description: 'Webhook callback URL',
   })
-  @IsOptional()
+  @ValidateIf((o) => o.webhookUrl !== undefined)
   @IsUrl({ require_tld: false, require_protocol: true })
   webhookUrl?: string;
 
@@ -91,7 +108,7 @@ export class CreateInvoiceDto {
     type: 'object',
     additionalProperties: true,
   })
-  @IsOptional()
+  @ValidateIf((o) => o.metadata !== undefined)
   @IsObject()
   metadata?: Record<string, unknown>;
 }

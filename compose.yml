@@ -6,7 +6,7 @@ services:
     image: git.nexusocean.org/vincent/mint-admin:latest
     restart: unless-stopped
     ports:
-      - 127.0.0.1:3000:3000
+      - 127.0.0.1:5173:5173
     env_file:
       - .env
     depends_on:
@@ -20,9 +20,9 @@ services:
     image: git.nexusocean.org/vincent/mint-api:latest
     restart: unless-stopped
     ports:
-      - 127.0.0.1:8080:8080
+      - 127.0.0.1:3000:3000
     expose:
-      - 8080
+      - 3000
     env_file:
       - .env
     depends_on:

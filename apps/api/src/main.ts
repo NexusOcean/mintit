@@ -1,17 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import type { EnvironmentVariables } from './config/env.validation';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 const isProd = process.env.NODE_ENV === 'production';
-
-const origins = isProd ? true : 'http://localhost:8080';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -20,7 +15,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({
-    origin: origins,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
@@ -35,10 +30,7 @@ async function bootstrap() {
   );
   app.enableShutdownHooks();
 
-  const config = app.get(ConfigService<EnvironmentVariables, true>);
-  const nodeEnv = config.get('NODE_ENV', { infer: true });
-
-  if (nodeEnv !== 'production') {
+  if (!isProd) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Payments API')
       .setDescription('REST API for payment processor')
@@ -62,10 +54,10 @@ async function bootstrap() {
     );
   }
 
-  await app.listen(8080);
-  if (nodeEnv !== 'production') {
-    console.log(`UI at: http://localhost:3000`);
-    console.log('Swagger docs: http://localhost:8080/docs');
+  await app.listen(3000);
+  if (!isProd) {
+    console.log('Swagger docs: http://localhost:3000/docs');
+    console.log(`Listening on: http://localhost:5173`);
   }
 }
 

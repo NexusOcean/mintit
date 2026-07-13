@@ -1190,17 +1190,15 @@
               "firo"
             ]
           },
+          "fiatAmount": {
+            "type": "number",
+            "example": 19.99,
+            "description": "Amount in fiat (USD). Exactly one of fiatAmount or amountAtomic must be provided. The fiat equivalent is always recorded on the invoice."
+          },
           "amountAtomic": {
             "type": "string",
             "example": "123456789012",
-            "description": "Amount owed in atomic units (string, BigInt-compatible). Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8)."
-          },
-          "fiatCurrency": {
-            "type": "string",
-            "example": "USD",
-            "description": "Fiat currency to record equivalent at lock time (informational only). Defaults to USD.",
-            "minLength": 3,
-            "maxLength": 8
+            "description": "Amount in atomic units (string, BigInt-compatible). Exactly one of fiatAmount or amountAtomic must be provided. The USD fiat equivalent is recorded on the invoice at creation time. Piconero for XMR (1 XMR = 10^12), satoshi for FIRO (1 FIRO = 10^8)."
           },
           "expiresInSeconds": {
             "type": "number",
@@ -1228,8 +1226,7 @@
           }
         },
         "required": [
-          "chain",
-          "amountAtomic"
+          "chain"
         ]
       },
       "InvoiceResponseDto": {

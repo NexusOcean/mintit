@@ -36,7 +36,7 @@ export class InvoicesService {
     const chain = dto.chain;
 
     const defaultExpiry = this.settings.get(chain, 'invoiceDefaultExpirySec');
-    const maxExpiry = this.settings.get(dto.chain, 'invoiceMaxExpirySec');
+    const maxExpiry = this.settings.get(chain, 'invoiceMaxExpirySec');
     const defaultConfirmations = this.settings.get(chain, 'confirmationDepth');
     const expiresIn = dto.expiresInSeconds ?? defaultExpiry;
 
@@ -47,45 +47,38 @@ export class InvoicesService {
     }
 
     const { asset, decimals, symbol } = CHAIN_CONFIG[chain];
-    const fiatCurrency = (dto.fiatCurrency ?? 'USD').toUpperCase();
+    // TODO: read from config BASE_FIAT_CURRENCY
+    const fiatCurrency = 'USD';
 
-    let amountAtomic = '';
-    let amountFiat = 0;
-    let rate = 0;
-    let rateLockedAt = new Date();
+    let quote: Awaited<ReturnType<typeof this.price.getQuote>>;
+    try {
+      quote = await this.price.getQuote(symbol, fiatCurrency);
+    } catch (err) {
+      throw new BadRequestException(
+        `Price feed unavailable: ${(err as Error).message}`,
+      );
+    }
+
+    let amountAtomic: string;
+    let amountFiat: number;
 
     if (dto.amountAtomic) {
       amountAtomic = dto.amountAtomic;
-      try {
-        const quote = await this.price.getQuote(symbol, fiatCurrency);
-        const units = new BigNumber(amountAtomic).dividedBy(
-          new BigNumber(10).pow(decimals),
-        );
-        amountFiat = units.multipliedBy(quote.fiatPerAsset).toNumber();
-        rate = quote.assetPerFiat;
-        rateLockedAt = quote.fetchedAt;
-      } catch (err) {
-        this.log.warn(
-          `Price lock skipped: ${(err as Error).message}. Invoice created without fiat record.`,
-        );
-      }
+      const units = new BigNumber(amountAtomic).dividedBy(
+        new BigNumber(10).pow(decimals),
+      );
+      amountFiat = units.multipliedBy(quote.fiatPerAsset).toNumber();
     } else {
-      try {
-        const quote = await this.price.getQuote(symbol, fiatCurrency);
-        amountAtomic = this.price.convertFiatToAtomic(
-          dto.fiatAmount,
-          quote,
-          decimals,
-        );
-        amountFiat = dto.fiatAmount;
-        rate = quote.assetPerFiat;
-        rateLockedAt = quote.fetchedAt;
-      } catch (err) {
-        throw new BadRequestException(
-          `Price feed unavailable, cannot convert fiat amount: ${(err as Error).message}`,
-        );
-      }
+      amountAtomic = this.price.convertFiatToAtomic(
+        dto.fiatAmount!,
+        quote,
+        decimals,
+      );
+      amountFiat = dto.fiatAmount!;
     }
+
+    const rate = quote.assetPerFiat;
+    const rateLockedAt = quote.fetchedAt;
 
     const { address, addressIndex } = await this.chains
       .get(chain)

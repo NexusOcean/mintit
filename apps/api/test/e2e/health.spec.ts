@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE = 'http://localhost:8080/v1';
+const BASE = 'http://localhost:3000/v1';
 
 describe('Health', () => {
   describe('GET /health/live', () => {

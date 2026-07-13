@@ -11,7 +11,7 @@ interface CoinGeckoSimplePriceResponse {
 
 const SYMBOL_TO_COINGECKO_ID: Record<string, string> = {
   XMR: 'monero',
-  FIRO: 'firo',
+  FIRO: 'zcoin',
   PIVX: 'pivx',
 };
 
