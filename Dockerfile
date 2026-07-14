@@ -3,10 +3,9 @@ FROM node:24-slim AS builder
 WORKDIR /app
 
 RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
-RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 ENV CI=true
-ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY pnpm-workspace.yaml ./
 COPY package.json pnpm-lock.yaml ./
@@ -29,7 +28,7 @@ FROM node:24-slim AS api
 WORKDIR /app
 
 RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
-RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 COPY pnpm-workspace.yaml ./
 COPY package.json pnpm-lock.yaml ./
@@ -49,16 +48,10 @@ ENV NODE_ENV=production
 CMD ["node", "apps/api/dist/src/main.js"]
 
 # ─── web runtime ──────────────────────────────────────────────────────────────
-FROM node:24-alpine AS web
-WORKDIR /app
+FROM nginx:alpine AS web
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
-
-USER node
-EXPOSE 3000
-CMD ["node", "apps/web/server.js"]
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]

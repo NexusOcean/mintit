@@ -1,14 +1,12 @@
 name: mintit
 
 services:
-  mint_admin:
-    container_name: mint_admin
-    image: git.nexusocean.org/vincent/mint-admin:latest
+  mint_web:
+    container_name: mint_web
+    image: git.nexusocean.org/vincent/mint-web:latest
     restart: unless-stopped
     ports:
-      - 127.0.0.1:5173:5173
-    env_file:
-      - .env
+      - 127.0.0.1:8080:8080
     depends_on:
       mint_api:
         condition: service_started
@@ -19,14 +17,12 @@ services:
     container_name: mint_api
     image: git.nexusocean.org/vincent/mint-api:latest
     restart: unless-stopped
-    ports:
-      - 127.0.0.1:3000:3000
     expose:
       - 3000
     env_file:
       - .env
     depends_on:
-      mint_mongo:
+      mint_db:
         condition: service_started
     volumes:
       - wallet-data:/app/data/wallet
@@ -76,7 +72,6 @@ services:
     expose:
       - 18081
     command:
-      - --stagenet
       - --rpc-restricted-bind-ip=0.0.0.0
       - --rpc-restricted-bind-port=18089
       - --rpc-bind-ip=0.0.0.0

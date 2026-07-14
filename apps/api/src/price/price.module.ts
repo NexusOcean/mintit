@@ -27,9 +27,10 @@ import { RATE_PROVIDER, type RateProvider } from './rate-provider.interface';
         coinGecko: CoinGeckoRateProvider,
         cmc: CmcRateProvider,
       ): RateProvider[] => {
-        const providers: RateProvider[] = [coinGecko];
         const cmcKey = config.get('CMC_API_KEY', { infer: true });
-        if (cmcKey) providers.push(cmc);
+        const providers: RateProvider[] = cmcKey
+          ? [cmc, coinGecko]
+          : [coinGecko];
         return providers;
       },
     },
