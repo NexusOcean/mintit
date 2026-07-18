@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invoice · {{ invoice.publicId }}</title>
+  <link rel="stylesheet" href="/checkout.css" />
+</head>
+<body>
+<main class="checkout" data-public-id="{{ invoice.publicId }}">
+    <div class="checkout__brand">
+      <img src="/logo.png" alt="mintit" />
+      <span>mintit</span>
+    </div>
+
+    <header class="checkout__header">
+      <h1>Pay {{ invoice.amountFiat }} {{ invoice.fiatCurrency }}</h1>
+      <p class="checkout__rate">{{ invoice.rate }} {{ invoice.asset | upper }}/{{ invoice.fiatCurrency }}</p>
+    </header>
+
+    <section class="checkout__qr">
+      <img src="{{ qrDataUrl }}" alt="Payment address QR code" width="240" height="240" />
+    </section>
+
+    <section class="checkout__amount">
+      <label>Amount due</label>
+      <div class="checkout__value">
+        <span id="amount">{{ invoice.amountAtomic }}</span>
+        <span>{{ invoice.asset | upper }}</span>
+        <button type="button" id="copy-amount" aria-label="Copy amount">Copy</button>
+      </div>
+    </section>
+
+    <section class="checkout__address">
+      <label>Send to</label>
+      <div class="checkout__value">
+        <span id="address">{{ invoice.address }}</span>
+        <button type="button" id="copy-address" aria-label="Copy address">Copy</button>
+      </div>
+    </section>
+
+    <section class="checkout__status" id="status" data-status="{{ invoice.status }}">
+      <p id="status-label">Status: {{ invoice.status }}</p>
+      <p id="confirmations">{{ invoice.confirmations }} / {{ invoice.confirmationsRequired }} confirmations</p>
+    </section>
+
+    <p class="checkout__expires">Expires: <span id="expires">{{ invoice.expiresAt }}</span></p>
+  </main>
+
+  <script src="/checkout.js" defer></script>
+</body>
+</html>

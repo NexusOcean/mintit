@@ -1,22 +1,26 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
-import { ViewsService } from './views.service';
+import { Controller, Get, NotFoundException, Param, Res } from '@nestjs/common';
 import type { Response } from 'express';
-
-export function fmt(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-}
+import { ViewsService } from './views.service';
 
 @Controller()
 export class ViewsController {
   constructor(private readonly viewsService: ViewsService) {}
 
-  // ── Public ────────────────────────────────────────────────────────────
+  @Get('i/:publicId')
+  async landing(@Param('publicId') publicId: string, @Res() res: Response) {
+    const invoice = await this.viewsService.getInvoice(publicId);
+    if (!invoice) {
+      throw new NotFoundException();
+    }
+    res.render('invoice.njk', { invoice });
+  }
 
-  @Get('invoice/:id')
-  landing(@Param(':id') id: string, @Res() res: Response) {
-    res.render('invoice.njk', { id });
+  @Get('i/:publicId/status')
+  async status(@Param('publicId') publicId: string) {
+    const status = await this.viewsService.getStatus(publicId);
+    if (!status) {
+      throw new NotFoundException();
+    }
+    return status;
   }
 }

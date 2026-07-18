@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'admin'],
+    ignores: ['eslint.config.mjs', 'admin', 'public'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
