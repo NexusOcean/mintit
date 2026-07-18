@@ -59,8 +59,7 @@ export class ViewsService {
     atomic: string,
     decimals: number,
     ticker: string,
-    displayDecimals = 5,
-    minDecimals = 2,
+    displayDecimals = 2,
   ): string {
     const divisor = Math.pow(10, decimals);
     const value = Number(atomic) / divisor;
@@ -73,12 +72,12 @@ export class ViewsService {
       val = val.replace(/0+$/, '');
       const [whole, frac = ''] = val.split('.');
       val =
-        frac.length < minDecimals
-          ? `${whole}.${frac.padEnd(minDecimals, '0')}`
+        frac.length < displayDecimals
+          ? `${whole}.${frac.padEnd(displayDecimals, '0')}`
           : val.replace(/\.$/, '');
     }
 
-    return `${val} ${ticker.toUpperCase()}`;
+    return val;
   }
 
   private formatDate(iso: string) {
