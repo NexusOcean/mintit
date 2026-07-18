@@ -118,6 +118,7 @@ export class InvoicesService {
   private toResponse(inv: InvoiceDocument): InvoiceResponseDto {
     return {
       id: inv._id.toString(),
+      publicId: inv.publicId,
       chain: inv.chain,
       asset: inv.asset,
       assetDecimals: inv.assetDecimals,

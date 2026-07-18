@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   UseGuards,
@@ -64,11 +65,14 @@ export class AdminController {
     return this.admin.listInvoices(query);
   }
 
-  @Get('invoices/:id')
-  @ApiOperation({ summary: 'List invoices' })
+  @Get('invoices/:publicId')
+  @ApiOperation({ summary: 'Get invoice by public ID' })
   @ApiOkResponse({ type: InvoiceResponseDto })
-  getInvoice(@Param('id') id: string): Promise<InvoiceResponseDto> {
-    return this.admin.getInvoice(id);
+  getInvoice(
+    @Param('publicId', new ParseUUIDPipe({ version: '4' }))
+    publicId: string,
+  ): Promise<InvoiceResponseDto> {
+    return this.admin.getInvoice(publicId);
   }
 
   @Post('payout')

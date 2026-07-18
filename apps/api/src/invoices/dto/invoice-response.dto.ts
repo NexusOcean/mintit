@@ -5,6 +5,9 @@ export class InvoiceResponseDto {
   @ApiProperty({ example: '6630f0c8a1b2c3d4e5f6a7b8' })
   id!: string;
 
+  @ApiProperty({ example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
+  publicId!: string;
+
   @ApiProperty({ enum: Chain, example: Chain.Xmr })
   chain!: Chain;
 

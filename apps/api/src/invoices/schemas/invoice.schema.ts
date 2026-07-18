@@ -1,11 +1,21 @@
 import { Asset, Chain, InvoiceStatus } from '@mintit/types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { randomUUID } from 'node:crypto';
 
 export type InvoiceDocument = HydratedDocument<Invoice>;
 
 @Schema({ collection: 'invoices', timestamps: true })
 export class Invoice {
+  @Prop({
+    type: String,
+    required: true,
+    default: () => randomUUID(),
+    unique: true,
+    index: true,
+  })
+  publicId!: string;
+
   @Prop({ type: String, enum: Chain, required: true, index: true })
   chain!: Chain;
 

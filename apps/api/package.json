@@ -39,6 +39,7 @@
     "helmet": "^8.2.0",
     "monero-ts": "^0.11.8",
     "mongoose": "^9.6.3",
+    "nunjucks": "^3.2.4",
     "otplib": "^13.4.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

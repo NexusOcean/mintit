@@ -18,6 +18,18 @@
           "introspectComments": true
         }
       }
+    ],
+    "assets": [
+      {
+        "include": "../pages/**/*",
+        "outDir": "dist/pages",
+        "watchAssets": true
+      },
+      {
+        "include": "../public/**/*",
+        "outDir": "dist/public",
+        "watchAssets": true
+      }
     ]
   }
 }

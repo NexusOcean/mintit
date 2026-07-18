@@ -52,9 +52,16 @@ export class AdminService {
   async listInvoices(
     query: InvoiceListQueryDto,
   ): Promise<InvoiceListResponseDto> {
-    const { status, page = 1, limit = 20, chain = Chain.Xmr } = query;
-    const filter: Record<string, unknown> = { chain };
-    if (status) filter.status = status;
+    const { status, page = 1, limit = 20, chain = Chain.Xmr, publicId } = query;
+    const filter: Record<string, unknown> = {};
+
+    if (publicId) {
+      filter.publicId = publicId;
+    } else {
+      filter.chain = chain;
+      if (status) filter.status = status;
+    }
+
     const skip = (page - 1) * limit;
 
     const [docs, total] = await Promise.all([
@@ -70,6 +77,7 @@ export class AdminService {
 
     const data = docs.map((doc) => ({
       id: doc._id.toString(),
+      publicId: doc.publicId,
       chain: doc.chain,
       asset: doc.asset,
       assetDecimals: doc.assetDecimals,
@@ -96,10 +104,10 @@ export class AdminService {
     return { data, total, page, limit };
   }
 
-  async getInvoice(id: string): Promise<InvoiceResponseDto> {
+  async getInvoice(publicId: string): Promise<InvoiceResponseDto> {
     const doc = await this.invoiceModel
-      .findById({
-        _id: new Types.ObjectId(id),
+      .findOne({
+        publicId,
       })
       .lean<LeanInvoice>();
 
@@ -109,6 +117,7 @@ export class AdminService {
 
     return {
       id: doc._id.toString(),
+      publicId: doc.publicId,
       chain: doc.chain,
       asset: doc.asset,
       assetDecimals: doc.assetDecimals,
