@@ -24,13 +24,16 @@ export class PublicInvoiceResponseDto {
   amountFormatted: string;
 
   @ApiProperty()
-  amountFiat!: number;
+  amountFiat!: string;
 
   @ApiProperty()
   fiatCurrency!: string;
 
   @ApiProperty()
   rate!: number;
+
+  @ApiProperty()
+  rateFormatted!: string;
 
   @ApiProperty({ enum: InvoiceStatus })
   status!: InvoiceStatus;

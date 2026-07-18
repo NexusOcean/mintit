@@ -12,6 +12,7 @@ import { SettingsModule } from './settings/settings.module';
 import { ChainsModule } from './chains/chains.module';
 import { AppController } from './app.controller';
 import { Chain } from '@mintit/types';
+import { ViewsModule } from './views/views.module';
 
 const enabledChains = (process.env.ENABLED_CHAINS ?? '')
   .split(',')
@@ -47,6 +48,7 @@ console.log('enabledChains from env:', enabledChains);
     AdminModule,
     HealthModule,
     SettingsModule,
+    ViewsModule,
   ],
   controllers: [AppController],
 })

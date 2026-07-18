@@ -22,12 +22,12 @@
     "assets": [
       {
         "include": "../pages/**/*",
-        "outDir": "dist/pages",
+        "outDir": "dist/src/pages",
         "watchAssets": true
       },
       {
         "include": "../public/**/*",
-        "outDir": "dist/public",
+        "outDir": "dist/src/public",
         "watchAssets": true
       }
     ]

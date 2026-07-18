@@ -1,5 +1,6 @@
 import { Controller, Get, NotFoundException, Param, Res } from '@nestjs/common';
 import type { Response } from 'express';
+import * as QRCode from 'qrcode';
 import { ViewsService } from './views.service';
 
 @Controller()
@@ -12,7 +13,10 @@ export class ViewsController {
     if (!invoice) {
       throw new NotFoundException();
     }
-    res.render('invoice.njk', { invoice });
+
+    const qrDataUrl = await QRCode.toDataURL(invoice.address);
+
+    res.render('invoice.njk', { invoice, qrDataUrl });
   }
 
   @Get('i/:publicId/status')

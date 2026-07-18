@@ -1,33 +1,34 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <title>Invoice · {{ invoice.publicId }}</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Invoice · {{ invoice.publicId }}</title>
   <link rel="stylesheet" href="/checkout.css" />
+  <link rel="icon" href="/favicon.ico" />
 </head>
 <body>
 <main class="checkout" data-public-id="{{ invoice.publicId }}">
     <div class="checkout__brand">
       <img src="/logo.png" alt="mintit" />
-      <span>mintit</span>
+      <span>mint<span class="checkout__light">it</span></span>
     </div>
 
     <header class="checkout__header">
       <h1>Pay {{ invoice.amountFiat }} {{ invoice.fiatCurrency }}</h1>
-      <p class="checkout__rate">{{ invoice.rate }} {{ invoice.asset | upper }}/{{ invoice.fiatCurrency }}</p>
+      <p class="checkout__rate">{{ invoice.rateFormatted }} {{ invoice.asset | upper }}/{{ invoice.fiatCurrency }}</p>
     </header>
 
     <section class="checkout__qr">
-      <img src="{{ qrDataUrl }}" alt="Payment address QR code" width="240" height="240" />
+      <img src="{{ qrDataUrl }}" class="qr__code" alt="Payment address QR code" width="240" height="240" />
     </section>
 
     <section class="checkout__amount">
       <label>Amount due</label>
       <div class="checkout__value">
-        <span id="amount">{{ invoice.amountAtomic }}</span>
+        <span id="amount">{{ invoice.amountFormatted }}</span>
         <span>{{ invoice.asset | upper }}</span>
-        <button type="button" id="copy-amount" aria-label="Copy amount">Copy</button>
+        <button type="button" class="copy__btn" id="copy-amount" aria-label="Copy amount">Copy</button>
       </div>
     </section>
 
@@ -35,7 +36,7 @@
       <label>Send to</label>
       <div class="checkout__value">
         <span id="address">{{ invoice.address }}</span>
-        <button type="button" id="copy-address" aria-label="Copy address">Copy</button>
+        <button type="button" class="copy__btn" id="copy-address" aria-label="Copy address">Copy</button>
       </div>
     </section>
 

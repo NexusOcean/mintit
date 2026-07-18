@@ -627,6 +627,15 @@
             }
           },
           {
+            "name": "publicId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -673,12 +682,12 @@
         ]
       }
     },
-    "/v1/admin/invoices/{id}": {
+    "/v1/admin/invoices/{publicId}": {
       "get": {
         "operationId": "AdminController_getInvoice",
         "parameters": [
           {
-            "name": "id",
+            "name": "publicId",
             "required": true,
             "in": "path",
             "schema": {
@@ -706,7 +715,7 @@
             "bearer": []
           }
         ],
-        "summary": "List invoices",
+        "summary": "Get invoice by public ID",
         "tags": [
           "admin"
         ]
@@ -846,6 +855,52 @@
           "health"
         ]
       }
+    },
+    "/i/{publicId}": {
+      "get": {
+        "operationId": "ViewsController_landing",
+        "parameters": [
+          {
+            "name": "publicId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Views"
+        ]
+      }
+    },
+    "/v1/i/{publicId}/status": {
+      "get": {
+        "operationId": "ViewsController_status",
+        "parameters": [
+          {
+            "name": "publicId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Views"
+        ]
+      }
     }
   },
   "info": {
@@ -862,11 +917,6 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-Api-Key"
-      },
-      "admin-key": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-Admin-Api-Key"
       },
       "bearer": {
         "scheme": "bearer",
@@ -1236,6 +1286,10 @@
             "type": "string",
             "example": "6630f0c8a1b2c3d4e5f6a7b8"
           },
+          "publicId": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
           "chain": {
             "type": "string",
             "enum": [
@@ -1346,6 +1400,7 @@
         },
         "required": [
           "id",
+          "publicId",
           "chain",
           "asset",
           "assetDecimals",

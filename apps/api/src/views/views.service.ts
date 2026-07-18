@@ -12,18 +12,6 @@ export class ViewsService {
     private readonly invoiceModel: Model<InvoiceDocument>,
   ) {}
 
-  private formatAtomic(
-    atomic: string,
-    decimals: number,
-    ticker: string,
-  ): string {
-    const divisor = Math.pow(10, decimals);
-    const val = (Number(atomic) / divisor)
-      .toFixed(decimals)
-      .replace(/\.?0+$/, '');
-    return `${val} ${ticker.toUpperCase()}`;
-  }
-
   async getInvoice(publicId: string): Promise<PublicInvoiceResponseDto | null> {
     const doc = await this.invoiceModel.findOne({ publicId }).lean();
     if (!doc) return null;
@@ -40,14 +28,15 @@ export class ViewsService {
         doc.assetDecimals,
         doc.asset,
       ),
-      amountFiat: doc.amountFiat,
+      amountFiat: doc.amountFiat.toFixed(2),
       fiatCurrency: doc.fiatCurrency,
       rate: doc.rate,
+      rateFormatted: this.formatRate(doc.rate),
       status: doc.status,
       confirmations: doc.confirmations,
       confirmationsRequired: doc.confirmationsRequired,
       receivedAtomic: doc.receivedAtomic,
-      expiresAt: doc.expiresAt.toISOString(),
+      expiresAt: this.formatDate(doc.expiresAt.toISOString()),
     };
   }
 
@@ -64,5 +53,42 @@ export class ViewsService {
       confirmationsRequired: doc.confirmationsRequired,
       receivedAtomic: doc.receivedAtomic,
     };
+  }
+
+  private formatAtomic(
+    atomic: string,
+    decimals: number,
+    ticker: string,
+    displayDecimals = 5,
+    minDecimals = 2,
+  ): string {
+    const divisor = Math.pow(10, decimals);
+    const value = Number(atomic) / divisor;
+    const scale = Math.pow(10, displayDecimals);
+    const rounded = Math.ceil(value * scale) / scale;
+
+    let val = rounded.toFixed(displayDecimals);
+    // trim trailing zeros but stop at minDecimals
+    if (val.includes('.')) {
+      val = val.replace(/0+$/, '');
+      const [whole, frac = ''] = val.split('.');
+      val =
+        frac.length < minDecimals
+          ? `${whole}.${frac.padEnd(minDecimals, '0')}`
+          : val.replace(/\.$/, '');
+    }
+
+    return `${val} ${ticker.toUpperCase()}`;
+  }
+
+  private formatDate(iso: string) {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  }
+
+  private formatRate(rate: number): string {
+    return rate.toFixed(2);
   }
 }

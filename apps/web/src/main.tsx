@@ -34,7 +34,7 @@ createRoot(document.getElementById('root')!).render(
           <Route element={<DashboardLayout />}>
             <Route index element={<OverviewPage />} />
             <Route path="invoices" element={<InvoicesPage />} />
-            <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+            <Route path="invoices/:publicId" element={<InvoiceDetailPage />} />
             <Route path="wallet" element={<WalletPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />

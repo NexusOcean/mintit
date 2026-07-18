@@ -23,7 +23,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
-  app.setGlobalPrefix('v1', { exclude: ['/'] });
+  app.setGlobalPrefix('v1', { exclude: ['/', '/i/:publicId'] });
 
   app.useGlobalPipes(
     new ValidationPipe({
