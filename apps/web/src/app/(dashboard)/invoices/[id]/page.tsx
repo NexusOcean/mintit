@@ -11,29 +11,25 @@ import {
 } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { api, type Invoice } from '@/src/lib/api';
-import { useChain } from '@/src/lib/chain-context';
 import { InvoiceDetail } from '@/src/components/invoice-detail';
 import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
 
-async function fetchInvoice(chain: string, id: string): Promise<Invoice> {
-  const { data } = await api.get(`/admin/invoices/${id}`, {
-    params: { chain },
-  });
+async function fetchInvoice(publicId: string): Promise<Invoice> {
+  const { data } = await api.get(`/admin/invoices/${publicId}`);
   return data;
 }
 
 export default function InvoiceDetailPage() {
-  const { chain } = useChain();
-  const { id } = useParams<{ id: string }>();
+  const { publicId } = useParams<{ publicId: string }>();
 
   const {
     data: invoice,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['invoice', chain, id],
-    queryFn: () => fetchInvoice(chain, id!),
-    enabled: !!id,
+    queryKey: ['invoice', publicId],
+    queryFn: () => fetchInvoice(publicId!),
+    enabled: !!publicId,
   });
 
   const metadataEntries = invoice?.metadata

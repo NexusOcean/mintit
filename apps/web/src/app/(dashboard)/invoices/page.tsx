@@ -10,6 +10,7 @@ import {
   Stack,
   Table,
   Text,
+  TextInput,
   Title,
   UnstyledButton,
 } from '@mantine/core';
@@ -19,6 +20,7 @@ import {
   IconChevronRight,
   IconExternalLink,
   IconEye,
+  IconSearch,
 } from '@tabler/icons-react';
 import {
   api,
@@ -47,13 +49,19 @@ const STATUSES: InvoiceStatus[] = [
 
 const LIMIT = 20;
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 async function fetchInvoices(
   chain: string,
   status: string | null,
   page: number,
+  publicId?: string,
 ): Promise<InvoiceListResponse> {
   const { data } = await api.get('/admin/invoices', {
-    params: { chain, ...(status ? { status } : {}), page, limit: LIMIT },
+    params: publicId
+      ? { publicId, page, limit: LIMIT }
+      : { chain, ...(status ? { status } : {}), page, limit: LIMIT },
   });
   return data;
 }
@@ -62,21 +70,30 @@ export default function InvoicesPage() {
   const { chain } = useChain();
   const [status, setStatus] = useState<InvoiceStatus | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Invoice | null>(null);
   const [detailOpened, { open: openDetail, close: closeDetail }] =
     useDisclosure(false);
 
+  const publicId = UUID_RE.test(search.trim()) ? search.trim() : undefined;
+  const searching = search.trim().length > 0;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['invoices', chain, status, page],
-    queryFn: () => fetchInvoices(chain, status, page),
+    queryKey: ['invoices', chain, status, page, publicId],
+    queryFn: () => fetchInvoices(chain, status, page, publicId),
     refetchInterval: 60_000,
-    enabled: !!chain,
+    enabled: !!chain && (!searching || !!publicId),
   });
 
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 1;
 
   function handleStatusFilter(s: InvoiceStatus) {
     setStatus((prev) => (prev === s ? null : s));
+    setPage(1);
+  }
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
     setPage(1);
   }
 
@@ -95,14 +112,26 @@ export default function InvoicesPage() {
         Invoices
       </Title>
 
+      <TextInput
+        placeholder="Search by public ID"
+        leftSection={<IconSearch size={14} />}
+        value={search}
+        onChange={(e) => handleSearchChange(e.currentTarget.value)}
+        minLength={36}
+        maxLength={36}
+        error={searching && !publicId ? 'Invalid public ID' : undefined}
+        styles={{ input: { fontFamily: HEADING, fontSize: 13 } }}
+      />
+
       {/* Status filters */}
-      <Group gap="xs">
+      <Group gap="xs" style={{ opacity: searching ? 0.4 : 1 }}>
         {STATUSES.map((s) => {
           const active = status === s;
           const sc = STATUS_COLORS[s];
           return (
             <UnstyledButton
               key={s}
+              disabled={searching}
               onClick={() => handleStatusFilter(s)}
               style={{
                 fontSize: 11,
@@ -116,7 +145,7 @@ export default function InvoicesPage() {
                 color: active ? sc.color : MUTED,
                 background: active ? sc.bg : 'transparent',
                 transition: 'all 150ms ease',
-                cursor: 'pointer',
+                cursor: searching ? 'not-allowed' : 'pointer',
               }}
             >
               {s}
@@ -197,7 +226,7 @@ export default function InvoicesPage() {
                         color: MUTED,
                       }}
                     >
-                      …{inv.id.slice(-8)}
+                      …{inv.publicId.slice(-8)}
                     </Text>
                   </Table.Td>
                   <Table.Td style={{ padding: '14px 16px' }}>
@@ -253,7 +282,7 @@ export default function InvoicesPage() {
                       </ActionIcon>
                       <ActionIcon
                         component={Link}
-                        to={`/invoices/${inv.id}`}
+                        to={`/invoices/${inv.publicId}`}
                         variant="secondary"
                         color="gray"
                         size="md"

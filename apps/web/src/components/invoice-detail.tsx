@@ -81,6 +81,7 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
 
   const rows: [string, string][] = [
     ['ID', invoice.id],
+    ['Public ID', invoice.publicId],
     ['Chain', invoice.chain.toUpperCase()],
     ['Address', invoice.address],
     [
