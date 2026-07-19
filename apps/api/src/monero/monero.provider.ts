@@ -38,6 +38,8 @@ export const MoneroWalletProvider: Provider = {
       rejectUnauthorized: false,
     };
 
+    if (!path) throw new Error('Missing MONERO_WALLET_PATH variable');
+
     mkdirSync(dirname(path), { recursive: true });
 
     // Branch 1: open existing wallet file

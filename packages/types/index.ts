@@ -10,11 +10,13 @@ export enum InvoiceStatus {
 export enum Chain {
   Xmr = 'xmr',
   Firo = 'firo',
+  Pivx = 'pivx',
 }
 
 export enum Asset {
   Xmr = 'xmr',
   Firo = 'firo',
+  Pivx = 'pivx',
 }
 
 export enum UserScope {

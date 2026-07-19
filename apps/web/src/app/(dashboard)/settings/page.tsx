@@ -214,16 +214,9 @@ export default function SettingsPage() {
   }, [chainData]);
 
   useEffect(() => {
-    if (chainData) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGlobalDraft({
-        rateCacheTtlMs: chainData.rateCacheTtlMs,
-        webhookMaxAttempts: chainData.webhookMaxAttempts,
-        webhookTimeoutMs: chainData.webhookTimeoutMs,
-        webhookDispatchIntervalMs: chainData.webhookDispatchIntervalMs,
-      });
-    }
-  }, [chainData]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGlobalDraft(globalData ?? null);
+  }, [globalData]);
 
   const chainMutation = useMutation({
     mutationFn: (values: Settings) =>

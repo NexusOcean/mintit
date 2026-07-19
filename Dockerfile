@@ -7,6 +7,9 @@ RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 ENV CI=true
 
+ARG VITE_API_URL=/v1
+ENV VITE_API_URL=$VITE_API_URL
+
 COPY pnpm-workspace.yaml ./
 COPY package.json pnpm-lock.yaml ./
 COPY packages/tsconfig/package.json ./packages/tsconfig/

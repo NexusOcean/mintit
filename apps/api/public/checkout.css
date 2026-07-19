@@ -118,6 +118,9 @@ body {
   flex: 1;
   font-size: 14px;
   word-break: break-all;
+  cursor: pointer;
+  user-select: all;
+  -webkit-user-select: all;
 }
 
 .checkout__value button {

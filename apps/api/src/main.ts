@@ -9,6 +9,10 @@ import { join } from 'path';
 import * as nunjucks from 'nunjucks';
 
 const isProd = process.env.NODE_ENV === 'production';
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -18,7 +22,7 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    origin: true,
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });

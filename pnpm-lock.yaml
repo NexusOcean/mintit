@@ -102,6 +102,9 @@ importers:
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
+      pivx-rpc:
+        specifier: ^0.7.3
+        version: 0.7.3
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -4259,6 +4262,10 @@ packages:
 
   piscina@4.9.3:
     resolution: {integrity: sha512-3e3ka9QCE8RJ5I9uszdAADZnkcYi21cqmF3gxox3u884N72qpFHCsIVhHt8cEQ9t3Auq/NqoiCEuhxlxxQuDWA==}
+
+  pivx-rpc@0.7.3:
+    resolution: {integrity: sha512-snlWTwcYOZXRCvBjsAFFUwmXSZbn1ufwiC15F7J+BbjLAsv7d4sik4lZdepZvGbx1AxNqKTWh1ROrFAi/HrfNw==}
+    engines: {node: '>=20.19.0'}
 
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
@@ -9382,6 +9389,8 @@ snapshots:
   piscina@4.9.3:
     optionalDependencies:
       '@napi-rs/nice': 1.1.1
+
+  pivx-rpc@0.7.3: {}
 
   pkg-dir@4.2.0:
     dependencies:

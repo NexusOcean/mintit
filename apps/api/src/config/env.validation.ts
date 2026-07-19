@@ -121,6 +121,28 @@ export class EnvironmentVariables {
   @IsOptional()
   FIRO_RPC_PROTOCOL: string = 'http';
 
+  // --- PIVX RPC ---
+  @IsString()
+  @IsOptional()
+  PIVX_RPC_HOST?: string;
+
+  @Transform(toInt)
+  @IsInt()
+  @IsOptional()
+  PIVX_RPC_PORT?: number;
+
+  @IsString()
+  @IsOptional()
+  PIVX_RPC_USER?: string;
+
+  @IsString()
+  @IsOptional()
+  PIVX_RPC_PASS?: string;
+
+  @IsString()
+  @IsOptional()
+  PIVX_RPC_PROTOCOL: string = 'http';
+
   // --- Additional Pricing ---
 
   @IsString()
@@ -250,6 +272,20 @@ export const validateEnv = (
     if (missing.length) {
       throw new Error(
         `Firo enabled but missing required vars: ${missing.join(', ')}`,
+      );
+    }
+  }
+
+  if (validated.ENABLED_CHAINS.includes(Chain.Pivx)) {
+    const missing = [
+      'PIVX_RPC_HOST',
+      'PIVX_RPC_PORT',
+      'PIVX_RPC_USER',
+      'PIVX_RPC_PASS',
+    ].filter((k) => !validated[k as keyof EnvironmentVariables]);
+    if (missing.length) {
+      throw new Error(
+        `PIVX enabled but missing required vars: ${missing.join(', ')}`,
       );
     }
   }
