@@ -4,6 +4,7 @@ import {
   IsUrl,
   IsNumber,
   Min,
+  MaxLength,
   IsObject,
   Matches,
   IsEnum,
@@ -111,4 +112,14 @@ export class CreateInvoiceDto {
   @ValidateIf((o) => o.metadata !== undefined)
   @IsObject()
   metadata?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    example: 'Invoice #1042 for consulting services',
+    description: 'Payer-facing note shown on the hosted checkout page',
+    maxLength: 280,
+  })
+  @ValidateIf((o) => o.memo !== undefined)
+  @IsString()
+  @MaxLength(280)
+  memo?: string;
 }

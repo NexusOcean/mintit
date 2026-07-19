@@ -37,6 +37,7 @@ export class ViewsService {
       confirmationsRequired: doc.confirmationsRequired,
       receivedAtomic: doc.receivedAtomic,
       expiresAt: this.formatDate(doc.expiresAt.toISOString()),
+      memo: doc.memo,
     };
   }
 

@@ -104,6 +104,7 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
     ],
     ['Created', fmt(invoice.createdAt)],
     ['Expires', fmt(invoice.expiresAt)],
+    ...(invoice.memo ? [['Memo', invoice.memo] as [string, string]] : []),
     ...(invoice.firstSeenAt
       ? [['First Seen', fmt(invoice.firstSeenAt)] as [string, string]]
       : []),

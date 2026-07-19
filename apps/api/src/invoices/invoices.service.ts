@@ -101,6 +101,7 @@ export class InvoicesService {
       confirmationsRequired: dto.confirmationsRequired ?? defaultConfirmations,
       webhookUrl: dto.webhookUrl,
       metadata: dto.metadata,
+      memo: dto.memo,
     });
 
     return this.toResponse(created);
@@ -139,6 +140,7 @@ export class InvoicesService {
       webhookUrl: inv.webhookUrl,
       chainData: inv.chainData,
       metadata: inv.metadata,
+      memo: inv.memo,
       createdAt: (
         inv as unknown as { createdAt: Date }
       ).createdAt.toISOString(),

@@ -50,6 +50,7 @@ export interface InvoiceDto {
   webhookUrl?: string;
   chainData?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  memo?: string;
 }
 
 export interface InvoiceListDto {

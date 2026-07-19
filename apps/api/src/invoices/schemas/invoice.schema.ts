@@ -75,6 +75,9 @@ export class Invoice {
   @Prop({ type: String })
   webhookUrl?: string;
 
+  @Prop({ type: String })
+  memo?: string;
+
   @Prop({ type: MongooseSchema.Types.Mixed })
   chainData?: Record<string, unknown>;
 

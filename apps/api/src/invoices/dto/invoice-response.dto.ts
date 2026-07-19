@@ -77,6 +77,9 @@ export class InvoiceResponseDto {
   @ApiPropertyOptional({ example: 'https://merchant.example.com/hook' })
   webhookUrl?: string;
 
+  @ApiPropertyOptional({ example: 'Invoice #1042 for consulting services' })
+  memo?: string;
+
   @ApiPropertyOptional({
     type: 'object',
     additionalProperties: true,

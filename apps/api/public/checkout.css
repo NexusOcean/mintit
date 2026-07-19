@@ -67,6 +67,12 @@ body {
   color: var(--muted);
 }
 
+.checkout__memo {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .checkout__qr {
   padding: 16px;
   background: var(--bg);

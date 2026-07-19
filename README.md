@@ -23,9 +23,9 @@
 - [x] 2FA
 - [x] Per-invoice coin selection
 - [x] Invoice memos
-- [ ] Manager and admin roles
-- [ ] Additional privacy coin support
-- [ ] Configurable coin price sources
-- [ ] Underpayment threshold
+- [x] Hosted checkout page
+- [ ] Additional coin support
+- [x] Configurable coin price sources
+- [ ] In Progress
 
 ### Phase 3 — Developer Experience (TBD)

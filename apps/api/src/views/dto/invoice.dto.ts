@@ -49,4 +49,7 @@ export class PublicInvoiceResponseDto {
 
   @ApiProperty()
   expiresAt!: string;
+
+  @ApiProperty({ required: false })
+  memo?: string;
 }
