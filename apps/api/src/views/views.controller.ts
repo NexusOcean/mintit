@@ -1,4 +1,11 @@
-import { Controller, Get, NotFoundException, Param, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Res,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import * as QRCode from 'qrcode';
 import { ViewsService } from './views.service';
@@ -8,7 +15,10 @@ export class ViewsController {
   constructor(private readonly viewsService: ViewsService) {}
 
   @Get('i/:publicId')
-  async landing(@Param('publicId') publicId: string, @Res() res: Response) {
+  async landing(
+    @Param('publicId', new ParseUUIDPipe({ version: '4' })) publicId: string,
+    @Res() res: Response,
+  ) {
     const invoice = await this.viewsService.getInvoice(publicId);
     if (!invoice) {
       throw new NotFoundException();
@@ -20,7 +30,9 @@ export class ViewsController {
   }
 
   @Get('i/:publicId/status')
-  async status(@Param('publicId') publicId: string) {
+  async status(
+    @Param('publicId', new ParseUUIDPipe({ version: '4' })) publicId: string,
+  ) {
     const status = await this.viewsService.getStatus(publicId);
     if (!status) {
       throw new NotFoundException();

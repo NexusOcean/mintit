@@ -27,6 +27,7 @@ export class ViewsService {
         doc.amountAtomic,
         doc.assetDecimals,
         doc.asset,
+        6,
       ),
       amountFiat: doc.amountFiat.toFixed(2),
       fiatCurrency: doc.fiatCurrency,
@@ -89,6 +90,6 @@ export class ViewsService {
   }
 
   private formatRate(rate: number): string {
-    return rate.toFixed(2);
+    return rate.toPrecision(6);
   }
 }
