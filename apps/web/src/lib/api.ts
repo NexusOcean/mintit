@@ -18,6 +18,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      axios.isAxiosError(error) &&
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      window.location.pathname !== '/login'
+    ) {
+      clearToken();
+      window.location.assign('/login');
+    }
+    return Promise.reject(error);
+  },
+);
+
 export function setToken(token: string) {
   Cookies.set(TOKEN_COOKIE, token, { sameSite: 'strict', expires: 1 });
 }

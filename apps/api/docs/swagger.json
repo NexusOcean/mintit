@@ -109,7 +109,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           }
@@ -150,7 +151,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           }
@@ -519,7 +521,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           }
@@ -562,7 +565,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           }
@@ -606,7 +610,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           },
@@ -798,7 +803,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           }
@@ -833,7 +839,8 @@
               "type": "string",
               "enum": [
                 "xmr",
-                "firo"
+                "firo",
+                "pivx"
               ]
             }
           }
@@ -1237,7 +1244,8 @@
             "description": "Chain to create the invoice on",
             "enum": [
               "xmr",
-              "firo"
+              "firo",
+              "pivx"
             ]
           },
           "fiatAmount": {
@@ -1273,6 +1281,12 @@
               "orderId": "ORD-1234"
             },
             "additionalProperties": true
+          },
+          "memo": {
+            "type": "string",
+            "example": "Invoice #1042 for consulting services",
+            "description": "Payer-facing note shown on the hosted checkout page",
+            "maxLength": 280
           }
         },
         "required": [
@@ -1294,7 +1308,8 @@
             "type": "string",
             "enum": [
               "xmr",
-              "firo"
+              "firo",
+              "pivx"
             ],
             "example": "xmr"
           },
@@ -1302,7 +1317,8 @@
             "type": "string",
             "enum": [
               "xmr",
-              "firo"
+              "firo",
+              "pivx"
             ],
             "example": "xmr"
           },
@@ -1384,6 +1400,10 @@
             "type": "string",
             "example": "https://merchant.example.com/hook"
           },
+          "memo": {
+            "type": "string",
+            "example": "Invoice #1042 for consulting services"
+          },
           "chainData": {
             "type": "object",
             "additionalProperties": true,
@@ -1426,7 +1446,8 @@
             "type": "string",
             "enum": [
               "xmr",
-              "firo"
+              "firo",
+              "pivx"
             ],
             "example": "xmr"
           },

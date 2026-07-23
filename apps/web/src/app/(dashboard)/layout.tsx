@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
   AppShell,
@@ -13,6 +13,7 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useQuery } from '@tanstack/react-query';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -25,7 +26,7 @@ import {
 } from '@tabler/icons-react';
 import { ChainProvider, useChain } from '@/src/lib/chain-context';
 import { Chain } from '@mintit/types';
-import { clearToken } from '@/src/lib/api';
+import { api, clearToken, getToken } from '@/src/lib/api';
 import { BORDER, CARD_BORDER, HEADING, PRIMARY } from '@/src/lib/theme';
 
 const NAV_ITEMS = [
@@ -113,6 +114,20 @@ function DashboardShell() {
     clearToken();
     navigate('/login');
   };
+
+  useEffect(() => {
+    if (!getToken()) {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
+
+  useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => api.get('/auth/me').then((res) => res.data),
+    enabled: !!getToken(),
+    retry: false,
+    staleTime: 0,
+  });
 
   const chainOptions =
     enabledChains.length > 0
