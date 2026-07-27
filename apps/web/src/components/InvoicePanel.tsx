@@ -1,57 +1,7 @@
 import { Group, Stack, Text } from '@mantine/core';
-import type { Invoice, InvoiceStatus } from '@/src/lib/api';
-import { HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
-
-export const STATUS_COLORS: Record<
-  InvoiceStatus,
-  { color: string; bg: string; border: string }
-> = {
-  pending: {
-    color: 'var(--mantine-color-dark-1)',
-    bg: 'var(--mantine-color-dark-5)',
-    border: 'var(--mantine-color-dark-4)',
-  },
-  seen: {
-    color: '#93c5fd',
-    bg: 'rgba(96,165,250,0.1)',
-    border: 'rgba(96,165,250,0.25)',
-  },
-  confirmed: { color: PRIMARY, bg: `${PRIMARY}11`, border: `${PRIMARY}33` },
-  underpaid: {
-    color: '#fcd34d',
-    bg: 'rgba(251,191,36,0.1)',
-    border: 'rgba(251,191,36,0.25)',
-  },
-  expired: {
-    color: 'var(--mantine-color-dark-2)',
-    bg: 'var(--mantine-color-dark-6)',
-    border: 'var(--mantine-color-dark-4)',
-  },
-  cancelled: {
-    color: '#f87171',
-    bg: 'rgba(248,113,113,0.1)',
-    border: 'rgba(248,113,113,0.25)',
-  },
-};
-
-export function formatAtomic(
-  atomic: string,
-  decimals: number,
-  ticker: string,
-): string {
-  const divisor = Math.pow(10, decimals);
-  const val = (Number(atomic) / divisor)
-    .toFixed(decimals)
-    .replace(/\.?0+$/, '');
-  return `${val} ${ticker.toUpperCase()}`;
-}
-
-export function fmt(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-}
+import type { InvoiceDto, InvoiceStatus } from '@mintit/types';
+import { HEADING, MUTED, STATUS_COLORS } from '@/src/lib/theme';
+import { fmt, formatAtomic } from '@/src/utils';
 
 export function StatusBadge({ status }: { status: InvoiceStatus }) {
   const s = STATUS_COLORS[status];
@@ -76,7 +26,7 @@ export function StatusBadge({ status }: { status: InvoiceStatus }) {
   );
 }
 
-export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
+export function InvoicePanel({ invoice }: { invoice: InvoiceDto }) {
   const ticker = invoice.asset.toUpperCase();
 
   const rows: [string, string][] = [

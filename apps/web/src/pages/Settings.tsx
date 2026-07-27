@@ -15,27 +15,29 @@ import {
 import { IconCheck } from '@tabler/icons-react';
 import { isAxiosError } from 'axios';
 import { api } from '@/src/lib/api';
-import {
-  type SettingsDto as Settings,
-  type GlobalSettingsDto as GlobalSettings,
-} from '@mintit/types';
-import { useChain } from '@/src/lib/chain-context';
+import type { SettingsDto, GlobalSettingsDto } from '@mintit/types';
+import { useChain } from '@/src/context/ChainContext';
 import { HEADING, MUTED } from '@/src/lib/theme';
 
-const CHAIN_FIELDS: { key: keyof Settings; label: string; unit: string }[] = [
-  { key: 'confirmationDepth', label: 'Confirmation Depth', unit: 'blocks' },
-  {
-    key: 'invoiceDefaultExpirySec',
-    label: 'Invoice Default Expiry',
-    unit: 'seconds',
-  },
-  { key: 'invoiceMaxExpirySec', label: 'Invoice Max Expiry', unit: 'seconds' },
-  { key: 'scannerLockTtlMs', label: 'Scanner Lock TTL', unit: 'ms' },
-  { key: 'syncedThresholdBlocks', label: 'Sync Threshold', unit: 'blocks' },
-];
+const CHAIN_FIELDS: { key: keyof SettingsDto; label: string; unit: string }[] =
+  [
+    { key: 'confirmationDepth', label: 'Confirmation Depth', unit: 'blocks' },
+    {
+      key: 'invoiceDefaultExpirySec',
+      label: 'Invoice Default Expiry',
+      unit: 'seconds',
+    },
+    {
+      key: 'invoiceMaxExpirySec',
+      label: 'Invoice Max Expiry',
+      unit: 'seconds',
+    },
+    { key: 'scannerLockTtlMs', label: 'Scanner Lock TTL', unit: 'ms' },
+    { key: 'syncedThresholdBlocks', label: 'Sync Threshold', unit: 'blocks' },
+  ];
 
 const GLOBAL_FIELDS: {
-  key: keyof GlobalSettings;
+  key: keyof GlobalSettingsDto;
   label: string;
   unit: string;
 }[] = [
@@ -49,11 +51,11 @@ const GLOBAL_FIELDS: {
   },
 ];
 
-function fetchSettings(chain: string): Promise<Settings> {
+function fetchSettings(chain: string): Promise<SettingsDto> {
   return api.get('/admin/settings', { params: { chain } }).then((r) => r.data);
 }
 
-function fetchGlobalSettings(): Promise<GlobalSettings> {
+function fetchGlobalSettings(): Promise<GlobalSettingsDto> {
   return api.get('/admin/settings/global').then((r) => r.data);
 }
 
@@ -186,7 +188,7 @@ function SaveRow({
   );
 }
 
-export default function SettingsPage() {
+export default function Settings() {
   const { chain } = useChain();
   const queryClient = useQueryClient();
 
@@ -200,8 +202,10 @@ export default function SettingsPage() {
     queryFn: fetchGlobalSettings,
   });
 
-  const [chainDraft, setChainDraft] = useState<Settings | null>(null);
-  const [globalDraft, setGlobalDraft] = useState<GlobalSettings | null>(null);
+  const [chainDraft, setChainDraft] = useState<SettingsDto | null>(null);
+  const [globalDraft, setGlobalDraft] = useState<GlobalSettingsDto | null>(
+    null,
+  );
 
   const [chainSaved, setChainSaved] = useState(false);
   const [globalSaved, setGlobalSaved] = useState(false);
@@ -219,7 +223,7 @@ export default function SettingsPage() {
   }, [globalData]);
 
   const chainMutation = useMutation({
-    mutationFn: (values: Settings) =>
+    mutationFn: (values: SettingsDto) =>
       api.put('/admin/settings', values, { params: { chain } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', chain] });
@@ -237,7 +241,7 @@ export default function SettingsPage() {
   });
 
   const globalMutation = useMutation({
-    mutationFn: (values: GlobalSettings) =>
+    mutationFn: (values: GlobalSettingsDto) =>
       api.put('/admin/settings/global', values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', 'global'] });
@@ -254,14 +258,14 @@ export default function SettingsPage() {
     },
   });
 
-  function handleChainChange(key: keyof Settings, value: string | number) {
+  function handleChainChange(key: keyof SettingsDto, value: string | number) {
     const num = typeof value === 'string' ? parseInt(value, 10) : value;
     if (isNaN(num)) return;
     setChainDraft((prev) => (prev ? { ...prev, [key]: num } : prev));
   }
 
   function handleGlobalChange(
-    key: keyof GlobalSettings,
+    key: keyof GlobalSettingsDto,
     value: string | number,
   ) {
     const num = typeof value === 'string' ? parseInt(value, 10) : value;
@@ -299,7 +303,7 @@ export default function SettingsPage() {
             CHAIN_FIELDS as { key: string; label: string; unit: string }[]
           }
           draft={chainDraft as unknown as Record<string, number>}
-          onChange={(k, v) => handleChainChange(k as keyof Settings, v)}
+          onChange={(k, v) => handleChainChange(k as keyof SettingsDto, v)}
         />
         <SaveRow
           dirty={chainDirty}
@@ -321,7 +325,9 @@ export default function SettingsPage() {
             GLOBAL_FIELDS as { key: string; label: string; unit: string }[]
           }
           draft={globalDraft as unknown as Record<string, number>}
-          onChange={(k, v) => handleGlobalChange(k as keyof GlobalSettings, v)}
+          onChange={(k, v) =>
+            handleGlobalChange(k as keyof GlobalSettingsDto, v)
+          }
         />
         <SaveRow
           dirty={globalDirty}

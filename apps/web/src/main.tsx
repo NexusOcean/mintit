@@ -7,37 +7,35 @@ import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
-import './app/globals.css';
+import './index.css';
 
 import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Providers from './components/Providers';
+import Providers from './providers';
 
-const LoginPage = lazy(() => import('./app/(auth)/login/page'));
-const DashboardLayout = lazy(() => import('./app/(dashboard)/layout'));
-const OverviewPage = lazy(() => import('./app/(dashboard)/page'));
-const InvoicesPage = lazy(() => import('./app/(dashboard)/invoices/page'));
-const InvoiceDetailPage = lazy(
-  () => import('./app/(dashboard)/invoices/[id]/page'),
-);
-const WalletPage = lazy(() => import('./app/(dashboard)/wallet/page'));
-const SettingsPage = lazy(() => import('./app/(dashboard)/settings/page'));
-const ProfilePage = lazy(() => import('./app/(dashboard)/profile/page'));
+const Login = lazy(() => import('./pages/Login'));
+const DashboardLayout = lazy(() => import('./pages/DashboardLayout'));
+const Overview = lazy(() => import('./pages/Overview'));
+const Invoices = lazy(() => import('./pages/Invoices'));
+const InvoiceDetail = lazy(() => import('./pages/InvoiceDetail'));
+const Wallet = lazy(() => import('./pages/Wallet'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 createRoot(document.getElementById('root')!).render(
   <Providers>
     <BrowserRouter>
       <Suspense>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<Login />} />
           <Route element={<DashboardLayout />}>
-            <Route index element={<OverviewPage />} />
-            <Route path="invoices" element={<InvoicesPage />} />
-            <Route path="invoices/:publicId" element={<InvoiceDetailPage />} />
-            <Route path="wallet" element={<WalletPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="profile" element={<ProfilePage />} />
+            <Route index element={<Overview />} />
+            <Route path="invoices" element={<Invoices />} />
+            <Route path="invoices/:publicId" element={<InvoiceDetail />} />
+            <Route path="wallet" element={<Wallet />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

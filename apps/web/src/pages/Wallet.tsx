@@ -23,21 +23,17 @@ import {
   IconEyeOff,
 } from '@tabler/icons-react';
 import { isAxiosError } from 'axios';
-import {
-  api,
-  type WalletInfo,
-  type XmrWalletInfo,
-  type FiroWalletInfo,
-} from '@/src/lib/api';
-import { useChain } from '@/src/lib/chain-context';
+import { api, type XmrWalletInfo, type FiroWalletInfo } from '@/src/lib/api';
+import type { WalletInfoDto } from '@mintit/types';
+import { useChain } from '@/src/context/ChainContext';
 import { HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
 
-async function fetchWallet(chain: string): Promise<WalletInfo> {
+async function fetchWallet(chain: string): Promise<WalletInfoDto> {
   const { data } = await api.get('/admin/wallet', { params: { chain } });
   return data;
 }
 
-export default function WalletPage() {
+export default function Wallet() {
   const { chain } = useChain();
   const { data, isLoading } = useQuery({
     queryKey: ['wallet', chain],

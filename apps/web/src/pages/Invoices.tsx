@@ -22,21 +22,22 @@ import {
   IconEye,
   IconSearch,
 } from '@tabler/icons-react';
+import { api } from '@/src/lib/api';
 import {
-  api,
   InvoiceStatus,
-  type Invoice,
-  type InvoiceListResponse,
-} from '@/src/lib/api';
-import { useChain } from '@/src/lib/chain-context';
-import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
+  type InvoiceDto,
+  type InvoiceListDto,
+} from '@mintit/types';
+import { useChain } from '@/src/context/ChainContext';
 import {
-  InvoiceDetail,
+  CARD_BORDER,
+  HEADING,
+  MUTED,
+  PRIMARY,
   STATUS_COLORS,
-  StatusBadge,
-  fmt,
-  formatAtomic,
-} from '@/src/components/invoice-detail';
+} from '@/src/lib/theme';
+import { fmt, formatAtomic } from '@/src/utils';
+import { InvoicePanel, StatusBadge } from '@/src/components/InvoicePanel';
 
 const STATUSES: InvoiceStatus[] = [
   InvoiceStatus.Pending,
@@ -57,7 +58,7 @@ async function fetchInvoices(
   status: string | null,
   page: number,
   publicId?: string,
-): Promise<InvoiceListResponse> {
+): Promise<InvoiceListDto> {
   const { data } = await api.get('/admin/invoices', {
     params: publicId
       ? { publicId, page, limit: LIMIT }
@@ -66,12 +67,12 @@ async function fetchInvoices(
   return data;
 }
 
-export default function InvoicesPage() {
+export default function Invoices() {
   const { chain } = useChain();
   const [status, setStatus] = useState<InvoiceStatus | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Invoice | null>(null);
+  const [selected, setSelected] = useState<InvoiceDto | null>(null);
   const [detailOpened, { open: openDetail, close: closeDetail }] =
     useDisclosure(false);
 
@@ -97,7 +98,7 @@ export default function InvoicesPage() {
     setPage(1);
   }
 
-  function handlePreview(inv: Invoice) {
+  function handlePreview(inv: InvoiceDto) {
     setSelected(inv);
     openDetail();
   }
@@ -365,7 +366,7 @@ export default function InvoicesPage() {
           },
         }}
       >
-        {selected && <InvoiceDetail invoice={selected} />}
+        {selected && <InvoicePanel invoice={selected} />}
       </Modal>
     </Stack>
   );

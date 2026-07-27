@@ -50,27 +50,6 @@ export function resolveChain(param: string | null | undefined): Chain {
   return 'xmr' as Chain;
 }
 
-// Re-export enums and shared types
-export { Chain, Asset, InvoiceStatus } from '@mintit/types';
-export type {
-  InvoiceDto,
-  InvoiceListDto,
-  WalletInfoDto,
-  HealthCheckDto,
-  HealthReadyDto,
-  HealthSyncedDto,
-  SettingsDto,
-} from '@mintit/types';
-
-// Legacy aliases — keep old names working across the web app
-export type { InvoiceDto as Invoice } from '@mintit/types';
-export type { InvoiceListDto as InvoiceListResponse } from '@mintit/types';
-export type { SettingsDto as Settings } from '@mintit/types';
-export type { HealthReadyDto as HealthReady } from '@mintit/types';
-export type { HealthSyncedDto as HealthSynced } from '@mintit/types';
-export type { WalletInfoDto as WalletInfo } from '@mintit/types';
-
-// Discriminated wallet shapes used by wallet page
 export interface XmrWalletInfo {
   chain: 'xmr';
   primaryAddress: string;

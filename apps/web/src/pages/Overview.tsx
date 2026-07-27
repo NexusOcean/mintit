@@ -16,14 +16,15 @@ import {
   IconCircleX,
   IconAlertCircle,
 } from '@tabler/icons-react';
-import { api, type HealthReady, type HealthSynced } from '@/src/lib/api';
-import { useChain } from '@/src/lib/chain-context';
+import { api } from '@/src/lib/api';
+import { useChain } from '@/src/context/ChainContext';
 import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
+import type { HealthReadyDto, HealthSyncedDto } from '@mintit/types';
 
 interface HealthResponse {
   live: { status: string };
-  ready: HealthReady;
-  synced: HealthSynced;
+  ready: HealthReadyDto;
+  synced: HealthSyncedDto;
 }
 
 interface Stats {
@@ -45,7 +46,7 @@ async function fetchStats(chain: string): Promise<Stats> {
   return data;
 }
 
-export default function OverviewPage() {
+export default function Overview() {
   const { chain } = useChain();
 
   const { data, isLoading } = useQuery({

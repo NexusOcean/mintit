@@ -10,16 +10,17 @@ import {
   Title,
 } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
-import { api, type Invoice } from '@/src/lib/api';
-import { InvoiceDetail } from '@/src/components/invoice-detail';
+import { api } from '@/src/lib/api';
+import type { InvoiceDto } from '@mintit/types';
+import { InvoicePanel } from '@/src/components/InvoicePanel';
 import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
 
-async function fetchInvoice(publicId: string): Promise<Invoice> {
+async function fetchInvoice(publicId: string): Promise<InvoiceDto> {
   const { data } = await api.get(`/admin/invoices/${publicId}`);
   return data;
 }
 
-export default function InvoiceDetailPage() {
+export default function InvoiceDetail() {
   const { publicId } = useParams<{ publicId: string }>();
 
   const {
@@ -89,7 +90,7 @@ export default function InvoiceDetailPage() {
               border: `1px solid ${CARD_BORDER}`,
             }}
           >
-            <InvoiceDetail invoice={invoice} />
+            <InvoicePanel invoice={invoice} />
           </Paper>
 
           {metadataEntries.length > 0 && (

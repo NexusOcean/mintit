@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -171,7 +170,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function LoginPage() {
+export default function Login() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('loading');
   const [error, setError] = useState<string | null>(null);
