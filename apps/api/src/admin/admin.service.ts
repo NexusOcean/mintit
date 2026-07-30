@@ -38,7 +38,9 @@ export class AdminService {
     const wallet = await this.chains.get(chain).getWalletInfo();
 
     const balance =
-      chain === Chain.Firo ? (wallet.availableBalance ?? 0) / 1e8 : 0;
+      chain === Chain.Firo || chain === Chain.Pivx
+        ? (wallet.availableBalance ?? 0) / 1e8
+        : 0;
 
     return { confirmedVolumeAtomic, balance };
   }
@@ -128,16 +130,20 @@ export class AdminService {
     };
   }
 
-  async payout(address: string): Promise<{ txid: string }> {
-    const isTransparent = /^[a-zA-Z34][1-9A-HJ-NP-Za-km-z]{25,40}$/.test(
-      address,
-    );
-    const isSpark = /^sm1[a-z0-9]{100,}$/.test(address);
-    if (!isTransparent && !isSpark) {
+  private static readonly PAYOUT_ADDRESS_PATTERNS: Partial<
+    Record<Chain, RegExp>
+  > = {
+    [Chain.Firo]: /^([a-zA-Z34][1-9A-HJ-NP-Za-km-z]{25,40}|sm1[a-z0-9]{50,})$/,
+    [Chain.Pivx]: /^(D[1-9A-HJ-NP-Za-km-z]{25,40}|ps1[a-z0-9]{50,})$/,
+  };
+
+  async payout(address: string, chain: Chain): Promise<{ txid: string }> {
+    const pattern = AdminService.PAYOUT_ADDRESS_PATTERNS[chain];
+    if (!pattern || !pattern.test(address)) {
       throw new BadRequestException('Invalid address');
     }
 
-    const adapter = this.chains.get(Chain.Firo);
+    const adapter = this.chains.get(chain);
     if (!adapter.getSparkBalance || !adapter.spendSpark) {
       throw new BadRequestException('Payout not supported for this chain');
     }

@@ -15,7 +15,7 @@ import { InvoiceThrottlerGuard } from './invoice-throttler.guard';
 
 @Controller()
 @UseGuards(InvoiceThrottlerGuard)
-@Throttle({ default: { ttl: 60_000, limit: 25 } })
+@Throttle({ default: { ttl: 60_000, limit: 60 } })
 export class ViewsController {
   constructor(private readonly viewsService: ViewsService) {}
 

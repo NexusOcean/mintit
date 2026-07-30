@@ -24,8 +24,29 @@
 - [x] Per-invoice coin selection
 - [x] Invoice memos
 - [x] Hosted checkout page
-- [ ] Additional coin support
+- [x] Additional coin support
 - [x] Configurable coin price sources
-- [ ] In Progress
+- [ ] TBA
 
 ### Phase 3 — Developer Experience (TBD)
+
+## Development
+
+### Dev mode (hot reload)
+
+```bash
+cp .env.example.dev .env.local   # fill in RPC creds, etc.
+pnpm install
+pnpm dev
+```
+
+Runs the API and web app directly via `turbo run dev`, reading config from `.env.local`.
+
+### Docker demo (Caddy + built image)
+
+```bash
+cp .env.example.prod .env        # fill in every blank
+docker compose up -d
+```
+
+Builds the app image from the root `Dockerfile` (multi-stage: builds `@mintit/types`, `@mintit/api`, `@mintit/web`, then serves the API + built SPA from one Node process) and fronts it with Caddy for TLS termination, alongside a Postgres container. See `docker-compose.yml` for the full service layout.

@@ -1,8 +1,8 @@
 name: mintit
 
 services:
-  caddy:
-    container_name: caddy
+  mint_demo:
+    container_name: mint_demo
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
@@ -22,7 +22,7 @@ services:
 
   mint_web:
     container_name: mint_web
-    image: nexusocean.org/mintit/mint-web:latest
+    build: .
     restart: unless-stopped
     expose:
       - 3000

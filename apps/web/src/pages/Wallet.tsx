@@ -23,7 +23,12 @@ import {
   IconEyeOff,
 } from '@tabler/icons-react';
 import { isAxiosError } from 'axios';
-import { api, type XmrWalletInfo, type FiroWalletInfo } from '@/src/lib/api';
+import {
+  api,
+  type XmrWalletInfo,
+  type FiroWalletInfo,
+  type PivxWalletInfo,
+} from '@/src/lib/api';
 import type { WalletInfoDto } from '@mintit/types';
 import { useChain } from '@/src/context/ChainContext';
 import { HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
@@ -59,6 +64,7 @@ export default function Wallet() {
   }
 
   if (chain === 'firo') return <FiroWallet data={data as FiroWalletInfo} />;
+  if (chain === 'pivx') return <PivxWallet data={data as PivxWalletInfo} />;
   return <XmrWallet data={data as XmrWalletInfo} />;
 }
 
@@ -98,32 +104,7 @@ function XmrWallet({ data }: { data: XmrWalletInfo }) {
 }
 
 function FiroWallet({ data }: { data: FiroWalletInfo }) {
-  const { chain } = useChain();
-  const [address, setAddress] = useState('');
-  const [txid, setTxid] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const availableFiro = (data.availableBalance / 1e8).toFixed(2);
-
-  async function handlePayout() {
-    setError(null);
-    setTxid(null);
-    setLoading(true);
-    try {
-      const { data: res } = await api.post(`/admin/payout?chain=${chain}`, {
-        address,
-      });
-      setTxid(res.txid);
-    } catch (err: unknown) {
-      const msg = isAxiosError(err)
-        ? (err.response?.data?.message ?? 'Payout failed')
-        : 'Payout failed';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <Box maw={640}>
@@ -157,58 +138,125 @@ function FiroWallet({ data }: { data: FiroWalletInfo }) {
           )}
         </SectionCard>
 
-        <SectionCard title="Payout">
-          <Stack gap="sm">
-            <TextInput
-              placeholder="Destination address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              style={{ maxWidth: 480 }}
-              styles={{
-                input: {
-                  fontFamily: HEADING,
-                  fontSize: 12,
-                },
-              }}
-            />
-            <Box>
-              <Button
-                onClick={handlePayout}
-                disabled={!address || loading}
-                loading={loading}
-                color="red"
-                variant="outline"
-                size="xs"
-                style={{ fontFamily: HEADING }}
-              >
-                {loading ? 'Sending…' : `Sweep ${availableFiro} FIRO`}
-              </Button>
-            </Box>
-            {txid && (
-              <Alert
-                color="green"
-                radius="sm"
-                p="sm"
-                styles={{
-                  message: {
-                    fontFamily: HEADING,
-                    fontSize: 12,
-                    wordBreak: 'break-all',
-                  },
-                }}
-              >
-                Sent — txid: {txid}
-              </Alert>
-            )}
-            {error && (
-              <Alert color="red" radius="sm" p="sm">
-                {error}
-              </Alert>
-            )}
-          </Stack>
-        </SectionCard>
+        <SweepPanel chain="firo" symbol="FIRO" available={availableFiro} />
       </Stack>
     </Box>
+  );
+}
+
+function PivxWallet({ data }: { data: PivxWalletInfo }) {
+  const availablePivx = (data.availableBalance / 1e8).toFixed(2);
+
+  return (
+    <Box maw={640}>
+      <Stack gap="xl">
+        <Title
+          order={2}
+          style={{ fontFamily: HEADING, letterSpacing: '-0.02em' }}
+        >
+          Wallet — PIVX
+        </Title>
+
+        <SectionCard title="Node">
+          <Field
+            label="Block Height"
+            value={data.blockHeight.toLocaleString()}
+            mono
+          />
+          <Field label="Shield Balance" value={`${availablePivx} PIVX`} mono />
+        </SectionCard>
+
+        <SweepPanel chain="pivx" symbol="PIVX" available={availablePivx} />
+      </Stack>
+    </Box>
+  );
+}
+
+function SweepPanel({
+  chain,
+  symbol,
+  available,
+}: {
+  chain: string;
+  symbol: string;
+  available: string;
+}) {
+  const [address, setAddress] = useState('');
+  const [txid, setTxid] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handlePayout() {
+    setError(null);
+    setTxid(null);
+    setLoading(true);
+    try {
+      const { data: res } = await api.post('/admin/payout', {
+        address,
+        chain,
+      });
+      setTxid(res.txid);
+    } catch (err: unknown) {
+      const msg = isAxiosError(err)
+        ? (err.response?.data?.message ?? 'Payout failed')
+        : 'Payout failed';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <SectionCard title="Payout">
+      <Stack gap="sm">
+        <TextInput
+          placeholder="Destination address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          style={{ maxWidth: 480 }}
+          styles={{
+            input: {
+              fontFamily: HEADING,
+              fontSize: 12,
+            },
+          }}
+        />
+        <Box>
+          <Button
+            onClick={handlePayout}
+            disabled={!address || loading}
+            loading={loading}
+            color="red"
+            variant="outline"
+            size="xs"
+            style={{ fontFamily: HEADING }}
+          >
+            {loading ? 'Sending…' : `Sweep ${available} ${symbol}`}
+          </Button>
+        </Box>
+        {txid && (
+          <Alert
+            color="green"
+            radius="sm"
+            p="sm"
+            styles={{
+              message: {
+                fontFamily: HEADING,
+                fontSize: 12,
+                wordBreak: 'break-all',
+              },
+            }}
+          >
+            Sent — txid: {txid}
+          </Alert>
+        )}
+        {error && (
+          <Alert color="red" radius="sm" p="sm">
+            {error}
+          </Alert>
+        )}
+      </Stack>
+    </SectionCard>
   );
 }
 

@@ -47,6 +47,7 @@ export function getToken(): string | undefined {
 
 export function resolveChain(param: string | null | undefined): Chain {
   if (param === 'firo') return 'firo' as Chain;
+  if (param === 'pivx') return 'pivx' as Chain;
   return 'xmr' as Chain;
 }
 
@@ -67,4 +68,10 @@ export interface FiroWalletInfo {
   unconfirmedBalance: number;
   hdMasterKeyId?: string;
   keypoolSize: number;
+}
+
+export interface PivxWalletInfo {
+  chain: 'pivx';
+  blockHeight: number;
+  availableBalance: number;
 }

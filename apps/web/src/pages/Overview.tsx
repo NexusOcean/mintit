@@ -33,6 +33,12 @@ interface Stats {
   balance?: number;
 }
 
+const CHAIN_DISPLAY: Record<string, { symbol: string; decimals: number }> = {
+  xmr: { symbol: 'XMR', decimals: 12 },
+  firo: { symbol: 'FIRO', decimals: 8 },
+  pivx: { symbol: 'PIVX', decimals: 8 },
+};
+
 // /health/ready responds with a non-2xx status when degraded, but the body
 // still carries the full check breakdown — recover it instead of losing the
 // whole panel to a rejected Promise.all.
@@ -81,10 +87,12 @@ export default function Overview() {
   const ready = data?.ready;
   const synced = data?.synced;
 
-  const isFiro = chain === 'firo';
-  const volumeDisplay = isFiro
-    ? `${(Number(stats?.confirmedVolumeAtomic) / 1e8).toFixed(2)} FIRO`
-    : `${(Number(stats?.confirmedVolumeAtomic) / 1e12).toFixed(3)} XMR`;
+  const chainDisplay = CHAIN_DISPLAY[chain] ?? CHAIN_DISPLAY.xmr;
+  const hasBalance = chain === 'firo' || chain === 'pivx';
+  const volumeDisplay = `${(
+    Number(stats?.confirmedVolumeAtomic) /
+    10 ** chainDisplay.decimals
+  ).toFixed(chainDisplay.decimals >= 12 ? 3 : 2)} ${chainDisplay.symbol}`;
 
   return (
     <Stack gap="xl">
@@ -152,10 +160,10 @@ export default function Overview() {
               </Grid.Col>
               <Grid.Col span={4}>
                 <StatBox
-                  label={isFiro ? 'Current Balance' : 'Wallet Height'}
+                  label={hasBalance ? 'Current Balance' : 'Wallet Height'}
                   value={
-                    isFiro
-                      ? `${Number(stats?.balance ?? 0).toFixed(2)} FIRO`
+                    hasBalance
+                      ? `${Number(stats?.balance ?? 0).toFixed(2)} ${chainDisplay.symbol}`
                       : synced.walletHeight.toLocaleString()
                   }
                   accent

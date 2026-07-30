@@ -85,6 +85,6 @@ export class AdminController {
     description: 'Invalid address or no spendable balance',
   })
   async payout(@Body() dto: PayoutDto): Promise<PayoutResponseDto> {
-    return this.admin.payout(dto.address);
+    return this.admin.payout(dto.address, dto.chain ?? Chain.Firo);
   }
 }
