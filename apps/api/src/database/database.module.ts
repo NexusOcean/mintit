@@ -1,16 +1,32 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import type { EnvironmentVariables } from '../config/env.validation';
-import { getMongoUri } from '../config/mongo-uri';
+import { User } from '../auth/schemas/user.entity';
+import { Invoice } from '../invoices/schemas/invoice.entity';
+import { Payment } from '../payments/schemas/payment.entity';
+import { ScannerLock } from '../scanner/schemas/scanner-lock.entity';
+import { Settings } from '../settings/schemas/settings.entity';
+import { WebhookDelivery } from '../webhooks/schemas/webhook-delivery.entity';
 
 @Module({
   imports: [
-    MongooseModule.forRootAsync({
+    TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (config: ConfigService<EnvironmentVariables, true>) => ({
-        uri: await getMongoUri(config.get('MONGO_URI', { infer: true })),
-        dbName: config.get('MONGO_DB_NAME', { infer: true }),
+      useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
+        type: 'postgres' as const,
+        url: config.get('DATABASE_URL', { infer: true }),
+        entities: [
+          User,
+          Invoice,
+          Payment,
+          ScannerLock,
+          Settings,
+          WebhookDelivery,
+        ],
+        synchronize: false,
+        migrationsRun: true,
+        migrations: [__dirname + '/migrations/*.js'],
       }),
     }),
   ],

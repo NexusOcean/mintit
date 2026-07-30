@@ -4,9 +4,10 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, isValidObjectId } from 'mongoose';
-import { Invoice, InvoiceDocument } from './schemas/invoice.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { validate as isValidUuid } from 'uuid';
+import { Invoice } from './schemas/invoice.entity';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { InvoiceResponseDto } from './dto/invoice-response.dto';
 import { PriceService } from '../price/price.service';
@@ -25,8 +26,8 @@ export class InvoicesService {
   private readonly log = new Logger(InvoicesService.name);
 
   constructor(
-    @InjectModel(Invoice.name)
-    private readonly invoices: Model<InvoiceDocument>,
+    @InjectRepository(Invoice)
+    private readonly invoices: Repository<Invoice>,
     private readonly price: PriceService,
     private readonly chains: ChainsService,
     private readonly settings: SettingsService,
@@ -86,39 +87,42 @@ export class InvoicesService {
 
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-    const created = await this.invoices.create({
-      chain,
-      asset,
-      assetDecimals: decimals,
-      address,
-      addressIndex,
-      amountAtomic,
-      amountFiat,
-      fiatCurrency,
-      rate,
-      rateLockedAt,
-      expiresAt,
-      confirmationsRequired: dto.confirmationsRequired ?? defaultConfirmations,
-      webhookUrl: dto.webhookUrl,
-      metadata: dto.metadata,
-      memo: dto.memo,
-    });
+    const created = await this.invoices.save(
+      this.invoices.create({
+        chain,
+        asset,
+        assetDecimals: decimals,
+        address,
+        addressIndex,
+        amountAtomic,
+        amountFiat,
+        fiatCurrency,
+        rate,
+        rateLockedAt,
+        expiresAt,
+        confirmationsRequired:
+          dto.confirmationsRequired ?? defaultConfirmations,
+        webhookUrl: dto.webhookUrl,
+        metadata: dto.metadata,
+        memo: dto.memo,
+      }),
+    );
 
     return this.toResponse(created);
   }
 
   async findById(id: string): Promise<InvoiceResponseDto> {
-    if (!isValidObjectId(id)) {
+    if (!isValidUuid(id)) {
       throw new NotFoundException('Invoice not found');
     }
-    const inv = await this.invoices.findById(id).exec();
+    const inv = await this.invoices.findOne({ where: { id } });
     if (!inv) throw new NotFoundException('Invoice not found');
     return this.toResponse(inv);
   }
 
-  private toResponse(inv: InvoiceDocument): InvoiceResponseDto {
+  private toResponse(inv: Invoice): InvoiceResponseDto {
     return {
-      id: inv._id.toString(),
+      id: inv.id,
       publicId: inv.publicId,
       chain: inv.chain,
       asset: inv.asset,

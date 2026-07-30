@@ -1,14 +1,10 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScannerLockService } from './scanner-lock.service';
-import { ScannerLock, ScannerLockSchema } from './schemas/scanner-lock.schema';
+import { ScannerLock } from './schemas/scanner-lock.entity';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: ScannerLock.name, schema: ScannerLockSchema },
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([ScannerLock])],
   providers: [ScannerLockService],
   exports: [ScannerLockService],
 })

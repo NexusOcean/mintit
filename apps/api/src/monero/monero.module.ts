@@ -3,15 +3,15 @@ import {
   OnApplicationBootstrap,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Chain } from '@mintit/types';
 import { MoneroWalletProvider } from './monero.provider';
 import { MoneroService } from './monero.service';
 import { MoneroScannerService } from './monero-scanner.service';
 import { ScannerLockModule } from '../scanner/scanner-lock.module';
-import { Invoice, InvoiceSchema } from '../invoices/schemas/invoice.schema';
-import { Payment, PaymentSchema } from '../payments/schemas/payment.schema';
+import { Invoice } from '../invoices/schemas/invoice.entity';
+import { Payment } from '../payments/schemas/payment.entity';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { SettingsModule } from '../settings/settings.module';
 import { MoneroAdapter } from '../chains/monero-adapter';
@@ -22,10 +22,7 @@ const INTERVAL_NAME = 'xmr-payment-scanner-tick';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Invoice.name, schema: InvoiceSchema },
-      { name: Payment.name, schema: PaymentSchema },
-    ]),
+    TypeOrmModule.forFeature([Invoice, Payment]),
     ScannerLockModule,
     WebhooksModule,
     SettingsModule,

@@ -4,13 +4,10 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule, SchedulerRegistry } from '@nestjs/schedule';
 import { WebhooksService } from './webhooks.service';
-import {
-  WebhookDelivery,
-  WebhookDeliverySchema,
-} from './schemas/webhook-delivery.schema';
+import { WebhookDelivery } from './schemas/webhook-delivery.entity';
 import { TUNABLE_DEFAULTS } from '../config/tunable-defaults';
 import { SettingsModule } from '../settings/settings.module';
 
@@ -20,9 +17,7 @@ const INTERVAL_NAME = 'webhook-dispatch-tick';
   imports: [
     ScheduleModule.forRoot(),
     HttpModule.register({ maxRedirects: 0 }),
-    MongooseModule.forFeature([
-      { name: WebhookDelivery.name, schema: WebhookDeliverySchema },
-    ]),
+    TypeOrmModule.forFeature([WebhookDelivery]),
     SettingsModule,
   ],
   providers: [WebhooksService],

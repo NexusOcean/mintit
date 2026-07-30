@@ -2,8 +2,7 @@ import { randomBytes } from 'crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 
-const SECRET_PATH =
-  process.env.JWT_SECRET_PATH ?? '/app/data/jwt/secret';
+const SECRET_PATH = process.env.JWT_SECRET_PATH ?? '/app/data/jwt/secret';
 
 // No JWT_SECRET env var by design: this is a self-hosted, cloneable
 // codebase, so a value baked into source or .env.example would be

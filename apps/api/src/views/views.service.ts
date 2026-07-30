@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Invoice, InvoiceDocument } from '../invoices/schemas/invoice.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Invoice } from '../invoices/schemas/invoice.entity';
 import { PublicInvoiceResponseDto } from './dto/invoice.dto';
 import { PublicInvoiceStatusDto } from './dto/status.dto';
 
 @Injectable()
 export class ViewsService {
   constructor(
-    @InjectModel(Invoice.name)
-    private readonly invoiceModel: Model<InvoiceDocument>,
+    @InjectRepository(Invoice)
+    private readonly invoiceRepo: Repository<Invoice>,
   ) {}
 
   async getInvoice(publicId: string): Promise<PublicInvoiceResponseDto | null> {
-    const doc = await this.invoiceModel.findOne({ publicId }).lean();
+    const doc = await this.invoiceRepo.findOne({ where: { publicId } });
     if (!doc) return null;
 
     return {
@@ -43,10 +43,15 @@ export class ViewsService {
   }
 
   async getStatus(publicId: string): Promise<PublicInvoiceStatusDto | null> {
-    const doc = await this.invoiceModel
-      .findOne({ publicId })
-      .select('status confirmations confirmationsRequired receivedAtomic')
-      .lean();
+    const doc = await this.invoiceRepo.findOne({
+      where: { publicId },
+      select: [
+        'status',
+        'confirmations',
+        'confirmationsRequired',
+        'receivedAtomic',
+      ],
+    });
     if (!doc) return null;
 
     return {

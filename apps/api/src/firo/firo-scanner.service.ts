@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Invoice, InvoiceDocument } from '../invoices/schemas/invoice.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { Invoice } from '../invoices/schemas/invoice.entity';
 import { FiroService } from './firo.service';
 import { ScannerLockService } from '../scanner/scanner-lock.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import { WebhookEvent } from '../webhooks/schemas/webhook-delivery.schema';
+import { WebhookEvent } from '../webhooks/schemas/webhook-delivery.entity';
 import { SettingsService } from '../settings/settings.service';
 import { Chain, InvoiceStatus } from '@mintit/types';
 
@@ -23,8 +23,8 @@ export class FiroScannerService {
   private running = false;
 
   constructor(
-    @InjectModel(Invoice.name)
-    private readonly invoices: Model<InvoiceDocument>,
+    @InjectRepository(Invoice)
+    private readonly invoices: Repository<Invoice>,
     private readonly firo: FiroService,
     private readonly lock: ScannerLockService,
     private readonly webhooks: WebhooksService,
@@ -57,8 +57,7 @@ export class FiroScannerService {
     const tipHeight = await this.firo.getBlockCount();
 
     const active = await this.invoices.find({
-      chain: CHAIN,
-      status: { $in: NON_TERMINAL },
+      where: { chain: CHAIN, status: In(NON_TERMINAL) },
     });
 
     if (active.length === 0) {
@@ -71,7 +70,7 @@ export class FiroScannerService {
         await this.processInvoice(inv, tipHeight);
       } catch (err) {
         this.log.warn(
-          `Invoice ${inv._id.toString()} processing failed: ${(err as Error).message}`,
+          `Invoice ${inv.id} processing failed: ${(err as Error).message}`,
         );
       }
     }
@@ -80,7 +79,7 @@ export class FiroScannerService {
   }
 
   private async processInvoice(
-    inv: InvoiceDocument,
+    inv: Invoice,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _tipHeight: number,
   ): Promise<void> {
@@ -104,7 +103,10 @@ export class FiroScannerService {
 
     const owed = BigInt(inv.amountAtomic);
 
-    const updates: Partial<Invoice> = {
+    const updates: Pick<Invoice, 'receivedAtomic'> &
+      Partial<
+        Pick<Invoice, 'firstSeenAt' | 'confirmations' | 'paidAt' | 'status'>
+      > = {
       receivedAtomic: receivedAtomic.toString(),
     };
 
@@ -134,11 +136,11 @@ export class FiroScannerService {
     updates.status = nextStatus;
     const statusChanged = nextStatus !== inv.status;
 
-    await this.invoices.updateOne({ _id: inv._id }, { $set: updates });
+    await this.invoices.update({ id: inv.id }, updates);
 
     if (statusChanged && webhookEvent && inv.webhookUrl) {
-      await this.webhooks.enqueue(inv._id, inv.webhookUrl, webhookEvent, {
-        invoiceId: inv._id.toString(),
+      await this.webhooks.enqueue(inv.id, inv.webhookUrl, webhookEvent, {
+        invoiceId: inv.id,
         chain: inv.chain,
         asset: inv.asset,
         assetDecimals: inv.assetDecimals,
@@ -154,24 +156,26 @@ export class FiroScannerService {
   private async expireStale(): Promise<void> {
     const now = new Date();
     const stale = await this.invoices.find({
-      chain: CHAIN,
-      status: InvoiceStatus.Pending,
-      expiresAt: { $lte: now },
+      where: {
+        chain: CHAIN,
+        status: InvoiceStatus.Pending,
+        expiresAt: LessThanOrEqual(now),
+      },
     });
 
     for (const inv of stale) {
-      const res = await this.invoices.updateOne(
-        { _id: inv._id, status: InvoiceStatus.Pending },
-        { $set: { status: InvoiceStatus.Expired } },
+      const res = await this.invoices.update(
+        { id: inv.id, status: InvoiceStatus.Pending },
+        { status: InvoiceStatus.Expired },
       );
 
-      if (res.modifiedCount > 0 && inv.webhookUrl) {
+      if ((res.affected ?? 0) > 0 && inv.webhookUrl) {
         await this.webhooks.enqueue(
-          inv._id,
+          inv.id,
           inv.webhookUrl,
           WebhookEvent.InvoiceExpired,
           {
-            invoiceId: inv._id.toString(),
+            invoiceId: inv.id,
             chain: inv.chain,
             asset: inv.asset,
             assetDecimals: inv.assetDecimals,

@@ -219,8 +219,12 @@ export default function SettingsPage() {
   }, [globalData]);
 
   const chainMutation = useMutation({
-    mutationFn: (values: Settings) =>
-      api.put('/admin/settings', values, { params: { chain } }),
+    mutationFn: (values: Settings) => {
+      const chainOnly = Object.fromEntries(
+        CHAIN_FIELDS.map(({ key }) => [key, values[key]]),
+      );
+      return api.put('/admin/settings', chainOnly, { params: { chain } });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings', chain] });
       setChainSaved(true);

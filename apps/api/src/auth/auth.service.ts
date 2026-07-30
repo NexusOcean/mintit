@@ -3,7 +3,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import {
   RegisterDto,
@@ -11,30 +11,31 @@ import {
   UpdateDto,
   TotpVerifyDto,
 } from './dto/user.dto';
-import { Model, Types } from 'mongoose';
+import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
-import { User } from './schemas/user.schema';
+import { User } from './schemas/user.entity';
 import { StatusResponseDto } from './dto/auth-response.dto';
 import { TotpService } from './totp.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly totpService: TotpService,
   ) {}
 
   async status(): Promise<StatusResponseDto> {
-    const registered = await this.userModel.findOne({ isValid: true });
+    const registered = await this.userRepo.findOne({
+      where: { isValid: true },
+    });
 
     return { registered: Boolean(registered) };
   }
 
   async me(sub: string) {
-    const user = await this.userModel.findOne({
-      _id: new Types.ObjectId(sub),
-      isValid: true,
+    const user = await this.userRepo.findOne({
+      where: { id: sub, isValid: true },
     });
 
     if (!user) {
@@ -45,18 +46,22 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<void> {
-    await this.userModel.deleteMany({ isValid: false });
+    await this.userRepo.delete({ isValid: false });
 
-    const adminExists = await this.userModel.countDocuments({ isValid: true });
+    const adminExists = await this.userRepo.count({
+      where: { isValid: true },
+    });
     if (adminExists > 0) {
       throw new ForbiddenException('Admin user already registered');
     }
 
     const hashedPassword = await argon2.hash(registerDto.password);
-    await this.userModel.create({
-      email: registerDto.email,
-      password: hashedPassword,
-    });
+    await this.userRepo.save(
+      this.userRepo.create({
+        email: registerDto.email.toLowerCase(),
+        password: hashedPassword,
+      }),
+    );
   }
 
   async verifyTotp(dto: TotpVerifyDto): Promise<string> {
@@ -77,7 +82,7 @@ export class AuthService {
     const user = await this.validateUser(loginDto);
 
     const totpValid = await this.totpService.validateTotp(
-      user._id.toString(),
+      user.id,
       loginDto.token,
     );
 
@@ -89,9 +94,11 @@ export class AuthService {
   }
 
   async update(sub: string, updateDto: UpdateDto) {
-    const user = await this.userModel
-      .findById({ _id: new Types.ObjectId(sub) })
-      .select('+password');
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id: sub })
+      .getOne();
 
     if (!user) {
       throw new UnauthorizedException('User not registered');
@@ -109,17 +116,14 @@ export class AuthService {
     const updates: Partial<{ email: string; password: string }> = {};
 
     if (updateDto.email !== user.email) {
-      updates.email = updateDto.email;
+      updates.email = updateDto.email.toLowerCase();
     }
 
     if (updateDto.newPassword) {
       updates.password = await argon2.hash(updateDto.newPassword);
     }
 
-    await this.userModel.findByIdAndUpdate(
-      { _id: new Types.ObjectId(sub) },
-      updates,
-    );
+    await this.userRepo.update({ id: sub }, updates);
 
     return { email: updates.email ?? user.email };
   }
@@ -148,14 +152,19 @@ export class AuthService {
   }
 
   generateToken(user: User): string {
-    return this.jwtService.sign({ sub: user._id.toString() });
+    return this.jwtService.sign({ sub: user.id });
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userModel.findById(new Types.ObjectId(id));
+    return this.userRepo.findOne({ where: { id } });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email, isValid: true }).select('+password');
+    return this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .andWhere('user.isValid = true')
+      .getOne();
   }
 }

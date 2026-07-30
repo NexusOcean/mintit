@@ -1,16 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Model, Types } from 'mongoose';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import { createHmac, randomUUID } from 'crypto';
 import { firstValueFrom } from 'rxjs';
 import {
   WebhookDelivery,
-  WebhookDeliveryDocument,
   WebhookDeliveryStatus,
   WebhookEvent,
-} from './schemas/webhook-delivery.schema';
+} from './schemas/webhook-delivery.entity';
 import type { EnvironmentVariables } from '../config/env.validation';
 import { SettingsService } from '../settings/settings.service';
 import { Chain } from '@mintit/types';
@@ -22,54 +21,57 @@ export class WebhooksService {
   private readonly log = new Logger(WebhooksService.name);
 
   constructor(
-    @InjectModel(WebhookDelivery.name)
-    private readonly model: Model<WebhookDeliveryDocument>,
+    @InjectRepository(WebhookDelivery)
+    private readonly repo: Repository<WebhookDelivery>,
     private readonly http: HttpService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
     private readonly settings: SettingsService,
   ) {}
 
   async enqueue(
-    invoiceId: Types.ObjectId,
+    invoiceId: string,
     url: string,
     event: WebhookEvent,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    const existing = await this.model
-      .findOne({ chain: CHAIN, invoiceId, event })
-      .exec();
+    const existing = await this.repo.findOne({
+      where: { chain: CHAIN, invoiceId, event },
+    });
     if (existing) return;
 
-    await this.model.create({
-      chain: CHAIN,
-      invoiceId,
-      url,
-      event,
-      payload: {
-        id: randomUUID(),
+    await this.repo.save(
+      this.repo.create({
+        chain: CHAIN,
+        invoiceId,
+        url,
         event,
-        timestamp: new Date().toISOString(),
-        data: payload,
-      },
-      attempts: 0,
-      nextAttemptAt: new Date(),
-      status: WebhookDeliveryStatus.Pending,
-    });
+        payload: {
+          id: randomUUID(),
+          event,
+          timestamp: new Date().toISOString(),
+          data: payload,
+        },
+        attempts: 0,
+        nextAttemptAt: new Date(),
+        status: WebhookDeliveryStatus.Pending,
+      }),
+    );
   }
 
   async dispatchDue(): Promise<void> {
     const now = new Date();
-    const due = await this.model
-      .find({
+    const due = await this.repo.find({
+      where: {
         status: WebhookDeliveryStatus.Pending,
-        nextAttemptAt: { $lte: now },
-      })
-      .limit(20);
+        nextAttemptAt: LessThanOrEqual(now),
+      },
+      take: 20,
+    });
 
     await Promise.all(due.map((d) => this.attempt(d)));
   }
 
-  private async attempt(delivery: WebhookDeliveryDocument): Promise<void> {
+  private async attempt(delivery: WebhookDelivery): Promise<void> {
     const secret = this.config.get('WEBHOOK_SIGNING_SECRET', { infer: true });
     const maxAttempts = this.settings.get(delivery.chain, 'webhookMaxAttempts');
     const timeout = this.settings.get(delivery.chain, 'webhookTimeoutMs');
@@ -88,7 +90,7 @@ export class WebhooksService {
             'Content-Type': 'application/json',
             'X-Api-Signature': `t=${timestamp},v1=${signature}`,
             'X-Api-Event': delivery.event,
-            'X-Api-Delivery-Id': delivery._id.toString(),
+            'X-Api-Delivery-Id': delivery.id,
           },
           timeout,
           validateStatus: () => true,
@@ -107,14 +109,14 @@ export class WebhooksService {
       this.scheduleRetry(delivery, maxAttempts);
     }
 
-    await delivery.save();
+    await this.repo.save(delivery);
   }
 
-  private scheduleRetry(delivery: WebhookDeliveryDocument, max: number): void {
+  private scheduleRetry(delivery: WebhookDelivery, max: number): void {
     if (delivery.attempts >= max) {
       delivery.status = WebhookDeliveryStatus.DeadLettered;
       this.log.warn(
-        `Webhook ${delivery._id.toString()} dead-lettered after ${delivery.attempts} attempts`,
+        `Webhook ${delivery.id} dead-lettered after ${delivery.attempts} attempts`,
       );
       return;
     }

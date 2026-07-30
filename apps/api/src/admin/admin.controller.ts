@@ -51,8 +51,11 @@ export class AdminController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get stats' })
+  @ApiQuery({ name: 'chain', enum: Chain, required: false })
   @ApiOkResponse({ type: StatsResponseDto })
-  async getStats(@Query('chain') chain: Chain): Promise<StatsResponseDto> {
+  async getStats(
+    @Query('chain') chain: Chain = Chain.Xmr,
+  ): Promise<StatsResponseDto> {
     return this.admin.getStats(chain);
   }
 

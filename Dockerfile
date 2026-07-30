@@ -30,7 +30,7 @@ RUN pnpm --filter @mintit/web build
 FROM node:24-slim AS api
 WORKDIR /app
 
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 COPY pnpm-workspace.yaml ./
@@ -49,15 +49,6 @@ RUN mkdir -p /app/data/wallet /app/data/jwt && chown -R node:node /app/data
 USER node
 ENV NODE_ENV=production
 CMD ["node", "apps/api/dist/src/main.js"]
-
-# ─── mongo runtime (auto-generates creds if not provided in .env) ─────────────
-FROM mongo:7 AS mongo
-
-COPY mongo-entrypoint.sh /usr/local/bin/mongo-entrypoint.sh
-RUN chmod +x /usr/local/bin/mongo-entrypoint.sh
-
-ENTRYPOINT ["mongo-entrypoint.sh"]
-CMD ["mongod"]
 
 # ─── caddy builder (with rate-limit plugin) ───────────────────────────────────
 FROM caddy:2-builder AS caddy-builder

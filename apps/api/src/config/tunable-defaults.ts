@@ -1,5 +1,5 @@
-// Seed values for the Mongo-backed Settings doc, and the scanner poll interval.
-// Runtime-tunable values live in Mongo after first seed; these are just starting points.
+// Seed values for the Postgres-backed Settings row, and the scanner poll interval.
+// Runtime-tunable values live in Postgres after first seed; these are just starting points.
 export const TUNABLE_DEFAULTS = {
   CONFIRMATION_DEPTH: 1,
   INVOICE_DEFAULT_EXPIRY_SEC: 3600,

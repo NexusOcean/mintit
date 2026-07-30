@@ -3,14 +3,14 @@ import {
   OnApplicationBootstrap,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { createFiroRpcClient } from '@nexusocean/firo-rpc';
 import { FIRO_CLIENT, FiroClient } from './firo.constants';
 import { FiroService } from './firo.service';
 import { FiroScannerService } from './firo-scanner.service';
-import { Invoice, InvoiceSchema } from '../invoices/schemas/invoice.schema';
+import { Invoice } from '../invoices/schemas/invoice.entity';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ScannerLockModule } from '../scanner/scanner-lock.module';
 import { SettingsModule } from '../settings/settings.module';
@@ -24,7 +24,7 @@ const INTERVAL_NAME = 'firo-payment-scanner-tick';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Invoice.name, schema: InvoiceSchema }]),
+    TypeOrmModule.forFeature([Invoice]),
     ScannerLockModule,
     WebhooksModule,
     SettingsModule,

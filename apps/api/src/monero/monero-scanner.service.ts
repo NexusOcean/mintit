@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Invoice, InvoiceDocument } from '../invoices/schemas/invoice.schema';
-import { Payment, PaymentDocument } from '../payments/schemas/payment.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
+import { Invoice } from '../invoices/schemas/invoice.entity';
+import { Payment } from '../payments/schemas/payment.entity';
 import { MoneroService } from './monero.service';
 import { ScannerLockService } from '../scanner/scanner-lock.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import { WebhookEvent } from '../webhooks/schemas/webhook-delivery.schema';
+import { WebhookEvent } from '../webhooks/schemas/webhook-delivery.entity';
 import type { MoneroIncomingTransfer } from 'monero-ts';
 import { SettingsService } from '../settings/settings.service';
 import { Chain, InvoiceStatus } from '@mintit/types';
@@ -26,10 +26,10 @@ export class MoneroScannerService {
   private running = false;
 
   constructor(
-    @InjectModel(Invoice.name)
-    private readonly invoices: Model<InvoiceDocument>,
-    @InjectModel(Payment.name)
-    private readonly payments: Model<PaymentDocument>,
+    @InjectRepository(Invoice)
+    private readonly invoices: Repository<Invoice>,
+    @InjectRepository(Payment)
+    private readonly payments: Repository<Payment>,
     private readonly monero: MoneroService,
     private readonly lock: ScannerLockService,
     private readonly webhooks: WebhooksService,
@@ -64,8 +64,7 @@ export class MoneroScannerService {
 
     // 2. Process active invoices.
     const active = await this.invoices.find({
-      chain: CHAIN,
-      status: { $in: NON_TERMINAL },
+      where: { chain: CHAIN, status: In(NON_TERMINAL) },
     });
 
     if (active.length === 0) {
@@ -113,7 +112,7 @@ export class MoneroScannerService {
         await this.processInvoice(inv, subTransfers);
       } catch (err) {
         this.log.warn(
-          `Invoice ${inv._id.toString()} processing failed: ${(err as Error).message}`,
+          `Invoice ${inv.id} processing failed: ${(err as Error).message}`,
         );
       }
     }
@@ -122,18 +121,15 @@ export class MoneroScannerService {
   }
 
   private async processInvoice(
-    inv: InvoiceDocument,
+    inv: Invoice,
     transfers: MoneroIncomingTransfer[],
   ): Promise<void> {
     if (transfers.length === 0) return;
 
-    const known = await this.payments
-      .find(
-        { chain: CHAIN, invoiceId: inv._id },
-        { txHash: 1, addressIndex: 1, confirmedAt: 1 },
-      )
-      .lean()
-      .exec();
+    const known = await this.payments.find({
+      where: { chain: CHAIN, invoiceId: inv.id },
+      select: ['txHash', 'addressIndex', 'confirmedAt'],
+    });
     const knownMap = new Map(
       known.map((p) => [`${p.txHash}:${p.addressIndex}`, p]),
     );
@@ -161,9 +157,9 @@ export class MoneroScannerService {
 
       if (!existing) {
         await this.payments
-          .create({
+          .insert({
             chain: CHAIN,
-            invoiceId: inv._id,
+            invoiceId: inv.id,
             address: inv.address,
             addressIndex: addressIdx,
             txHash,
@@ -174,49 +170,48 @@ export class MoneroScannerService {
             firstSeenAt: new Date(),
             ...(isConfirmed ? { confirmedAt: new Date() } : {}),
           })
-          .catch((err: { code?: number }) => {
-            if (err.code !== 11000) throw err;
+          .catch((err: { code?: string }) => {
+            // Postgres unique_violation
+            if (err.code !== '23505') throw err;
           });
         changed = true;
       } else {
         // Only stamp confirmedAt on the transition (prevents drift).
         const stampConfirmed = isConfirmed && !existing.confirmedAt;
-        const res = await this.payments
-          .updateOne(
-            {
-              chain: CHAIN,
-              invoiceId: inv._id,
-              txHash,
-              addressIndex: addressIdx,
-            },
-            {
-              $set: {
-                amountAtomic: amountPiconero,
-                confirmations: numConfirmations,
-                unlocked: isUnlocked,
-                blockHeight: blockHeight ?? undefined,
-                ...(stampConfirmed ? { confirmedAt: new Date() } : {}),
-              },
-            },
-          )
-          .exec();
-        if (res.modifiedCount > 0) changed = true;
+        const res = await this.payments.update(
+          {
+            chain: CHAIN,
+            invoiceId: inv.id,
+            txHash,
+            addressIndex: addressIdx,
+          },
+          {
+            amountAtomic: amountPiconero,
+            confirmations: numConfirmations,
+            unlocked: isUnlocked,
+            blockHeight: blockHeight ?? undefined,
+            ...(stampConfirmed ? { confirmedAt: new Date() } : {}),
+          },
+        );
+        if ((res.affected ?? 0) > 0) changed = true;
       }
     }
 
     if (changed || NON_TERMINAL.includes(inv.status)) {
-      await this.recomputeInvoice(inv._id);
+      await this.recomputeInvoice(inv.id);
     }
   }
 
-  private async recomputeInvoice(invoiceId: Types.ObjectId): Promise<void> {
-    const inv = await this.invoices
-      .findOne({ _id: invoiceId, chain: CHAIN })
-      .exec();
+  private async recomputeInvoice(invoiceId: string): Promise<void> {
+    const inv = await this.invoices.findOne({
+      where: { id: invoiceId, chain: CHAIN },
+    });
     if (!inv) return;
     if (!NON_TERMINAL.includes(inv.status)) return;
 
-    const pays = await this.payments.find({ chain: CHAIN, invoiceId }).exec();
+    const pays = await this.payments.find({
+      where: { chain: CHAIN, invoiceId },
+    });
     if (pays.length === 0) return;
 
     const required = inv.confirmationsRequired;
@@ -237,7 +232,8 @@ export class MoneroScannerService {
     // Confirmed for payment: meets depth.
     const isConfirmed = minConfirmations >= required;
 
-    const updates: Partial<Invoice> = {
+    const updates: Pick<Invoice, 'receivedAtomic' | 'confirmations'> &
+      Partial<Pick<Invoice, 'firstSeenAt' | 'paidAt' | 'status'>> = {
       receivedAtomic: totalReceived.toString(),
       confirmations: minConfirmations === Infinity ? 0 : minConfirmations,
     };
@@ -265,11 +261,11 @@ export class MoneroScannerService {
     const statusChanged = nextStatus !== inv.status;
     updates.status = nextStatus;
 
-    await this.invoices.updateOne({ _id: inv._id }, { $set: updates }).exec();
+    await this.invoices.update({ id: inv.id }, updates);
 
     if (statusChanged && webhookEvent && inv.webhookUrl) {
-      await this.webhooks.enqueue(inv._id, inv.webhookUrl, webhookEvent, {
-        invoiceId: inv._id.toString(),
+      await this.webhooks.enqueue(inv.id, inv.webhookUrl, webhookEvent, {
+        invoiceId: inv.id,
         chain: inv.chain,
         asset: inv.asset,
         assetDecimals: inv.assetDecimals,
@@ -284,29 +280,27 @@ export class MoneroScannerService {
 
   private async expireStale(): Promise<void> {
     const now = new Date();
-    const stale = await this.invoices
-      .find({
+    const stale = await this.invoices.find({
+      where: {
         chain: CHAIN,
         status: InvoiceStatus.Pending,
-        expiresAt: { $lte: now },
-      })
-      .exec();
+        expiresAt: LessThanOrEqual(now),
+      },
+    });
 
     for (const inv of stale) {
-      const res = await this.invoices
-        .updateOne(
-          { _id: inv._id, status: InvoiceStatus.Pending },
-          { $set: { status: InvoiceStatus.Expired } },
-        )
-        .exec();
+      const res = await this.invoices.update(
+        { id: inv.id, status: InvoiceStatus.Pending },
+        { status: InvoiceStatus.Expired },
+      );
       // Gate webhook on actual transition (avoid double-fire on race).
-      if (res.modifiedCount > 0 && inv.webhookUrl) {
+      if ((res.affected ?? 0) > 0 && inv.webhookUrl) {
         await this.webhooks.enqueue(
-          inv._id,
+          inv.id,
           inv.webhookUrl,
           WebhookEvent.InvoiceExpired,
           {
-            invoiceId: inv._id.toString(),
+            invoiceId: inv.id,
             chain: inv.chain,
             asset: inv.asset,
             assetDecimals: inv.assetDecimals,

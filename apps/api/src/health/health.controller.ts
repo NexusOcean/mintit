@@ -1,12 +1,13 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
   ApiQuery,
 } from '@nestjs/swagger';
-import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { ChainsService } from '../chains/chains.service';
 import {
   LiveResponseDto,
@@ -20,7 +21,7 @@ import { Chain } from '@mintit/types';
 @Controller('health')
 export class HealthController {
   constructor(
-    @InjectConnection() private readonly mongo: Connection,
+    @InjectDataSource() private readonly dataSource: DataSource,
     private readonly chains: ChainsService,
   ) {}
 
@@ -37,17 +38,19 @@ export class HealthController {
   @ApiOkResponse({ type: ReadyResponseDto })
   async ready(
     @Query('chain') chain: Chain = Chain.Xmr,
-  ): Promise<ReadyResponseDto> {
+    @Res() res: Response,
+  ): Promise<void> {
     const checks: Record<string, HealthCheckDto> = {};
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    checks.database = { ok: this.mongo.readyState === 1 };
+    checks.database = await this.checkDatabase();
 
     const chainChecks = await this.chains.get(chain).healthCheck();
     Object.assign(checks, chainChecks);
 
     const ok = Object.values(checks).every((c) => c.ok);
-    return { status: ok ? 'ok' : 'degraded', checks };
+    const body: ReadyResponseDto = { status: ok ? 'ok' : 'degraded', checks };
+
+    res.status(ok ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).json(body);
   }
 
   @Get('synced')
@@ -78,6 +81,15 @@ export class HealthController {
         behind: -1,
         detail: (err as Error).message,
       };
+    }
+  }
+
+  private async checkDatabase(): Promise<HealthCheckDto> {
+    try {
+      await this.dataSource.query('SELECT 1');
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, detail: (err as Error).message };
     }
   }
 }

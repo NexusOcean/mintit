@@ -1,15 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AuthModule } from '../auth/auth.module';
-import { Invoice, InvoiceSchema } from '../invoices/schemas/invoice.schema';
+import { Invoice } from '../invoices/schemas/invoice.entity';
 
 @Module({
-  imports: [
-    AuthModule,
-    MongooseModule.forFeature([{ name: Invoice.name, schema: InvoiceSchema }]),
-  ],
+  imports: [AuthModule, TypeOrmModule.forFeature([Invoice])],
   controllers: [AdminController],
   providers: [AdminService],
 })

@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Model } from 'mongoose';
-import { Settings, SettingsDocument } from './schemas/settings.schema';
+import { Repository } from 'typeorm';
+import { Settings } from './schemas/settings.entity';
 import type { EnvironmentVariables } from '../config/env.validation';
 import { TUNABLE_DEFAULTS } from '../config/tunable-defaults';
 import { Chain } from '@mintit/types';
@@ -33,8 +33,8 @@ export class SettingsService implements OnModuleInit {
   >();
 
   constructor(
-    @InjectModel(Settings.name)
-    private readonly model: Model<SettingsDocument>,
+    @InjectRepository(Settings)
+    private readonly repo: Repository<Settings>,
     private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
 
@@ -47,11 +47,11 @@ export class SettingsService implements OnModuleInit {
   }
 
   async loadGlobal(): Promise<void> {
-    const existing = await this.model.findOne({ key: GLOBAL_KEY }).lean();
+    const existing = await this.repo.findOne({ where: { key: GLOBAL_KEY } });
 
     if (existing) {
       this.cache.set(GLOBAL_KEY, this.projectGlobal(existing));
-      this.log.log('Global settings loaded from Mongo');
+      this.log.log('Global settings loaded from Postgres');
       return;
     }
 
@@ -62,24 +62,25 @@ export class SettingsService implements OnModuleInit {
       webhookDispatchIntervalMs: TUNABLE_DEFAULTS.WEBHOOK_DISPATCH_INTERVAL_MS,
     };
 
-    await this.model.updateOne(
-      { key: GLOBAL_KEY },
-      { $setOnInsert: seed },
-      { upsert: true },
-    );
+    await this.repo
+      .createQueryBuilder()
+      .insert()
+      .values({ key: GLOBAL_KEY, ...seed })
+      .orIgnore()
+      .execute();
 
-    const doc = await this.model.findOne({ key: GLOBAL_KEY }).lean();
+    const doc = await this.repo.findOne({ where: { key: GLOBAL_KEY } });
     if (!doc) throw new Error('Global settings doc missing after upsert');
     this.cache.set(GLOBAL_KEY, this.projectGlobal(doc));
     this.log.log('Global settings seeded');
   }
 
   async load(chain: Chain): Promise<void> {
-    const existing = await this.model.findOne({ key: chain }).lean();
+    const existing = await this.repo.findOne({ where: { key: chain } });
 
     if (existing) {
       this.cache.set(chain, this.project(existing));
-      this.log.log(`Settings loaded from Mongo for ${chain}`);
+      this.log.log(`Settings loaded from Postgres for ${chain}`);
       return;
     }
 
@@ -92,13 +93,14 @@ export class SettingsService implements OnModuleInit {
       syncedThresholdBlocks: TUNABLE_DEFAULTS.MONERO_SYNCED_THRESHOLD_BLOCKS,
     };
 
-    await this.model.updateOne(
-      { key: chain },
-      { $setOnInsert: seed },
-      { upsert: true },
-    );
+    await this.repo
+      .createQueryBuilder()
+      .insert()
+      .values({ key: chain, ...seed })
+      .orIgnore()
+      .execute();
 
-    const doc = await this.model.findOne({ key: chain }).lean();
+    const doc = await this.repo.findOne({ where: { key: chain } });
     if (!doc) throw new Error(`Settings doc missing for ${chain} after upsert`);
     this.cache.set(chain, this.project(doc));
     this.log.log(`Settings seeded for ${chain}`);
@@ -153,14 +155,10 @@ export class SettingsService implements OnModuleInit {
     }
     if (Object.keys(set).length === 0) return this.getGlobal();
 
-    const updated = await this.model
-      .findOneAndUpdate(
-        { key: GLOBAL_KEY },
-        { $set: set },
-        { returnDocument: 'after', upsert: false, runValidators: true },
-      )
-      .lean();
+    const result = await this.repo.update({ key: GLOBAL_KEY }, set);
+    if (!result.affected) throw new Error('Global settings document missing');
 
+    const updated = await this.repo.findOne({ where: { key: GLOBAL_KEY } });
     if (!updated) throw new Error('Global settings document missing');
     this.cache.set(GLOBAL_KEY, this.projectGlobal(updated));
     return this.getGlobal();
@@ -176,14 +174,11 @@ export class SettingsService implements OnModuleInit {
     }
     if (Object.keys(set).length === 0) return this.getAll(chain);
 
-    const updated = await this.model
-      .findOneAndUpdate(
-        { key: chain },
-        { $set: set },
-        { returnDocument: 'after', upsert: false, runValidators: true },
-      )
-      .lean();
+    const result = await this.repo.update({ key: chain }, set);
+    if (!result.affected)
+      throw new Error(`Settings document missing for chain ${chain}`);
 
+    const updated = await this.repo.findOne({ where: { key: chain } });
     if (!updated)
       throw new Error(`Settings document missing for chain ${chain}`);
     this.cache.set(chain, this.project(updated));

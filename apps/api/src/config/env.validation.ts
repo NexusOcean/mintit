@@ -53,17 +53,9 @@ export class EnvironmentVariables {
   @IsOptional()
   PORT: number = 3000;
 
-  // --- Mongo ---
-  // Optional: if unset, falls back to creds generated/read from
-  // MONGO_CREDS_DIR (see config/mongo-uri.ts) for the bundled mint_db
-  // container. Set explicitly to point at a self-managed/hosted Mongo.
+  // --- Postgres ---
   @IsString()
-  @IsOptional()
-  MONGO_URI?: string;
-
-  @IsString()
-  @IsOptional()
-  MONGO_DB_NAME: string = 'mint_payments';
+  DATABASE_URL!: string;
 
   // --- Monero network ---
   @IsEnum(MoneroNetwork)

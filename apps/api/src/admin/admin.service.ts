@@ -1,28 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ChainsService } from '../chains/chains.service';
 import { WalletInfoResponseDto } from './dto/wallet-info.dto';
 import {
   InvoiceListQueryDto,
   InvoiceListResponseDto,
 } from './dto/invoice-list.dto';
-import { Invoice, InvoiceDocument } from '../invoices/schemas/invoice.schema';
+import { Invoice } from '../invoices/schemas/invoice.entity';
 import { StatsResponseDto } from './dto/wallet-stats.dto';
-import { Chain } from '@mintit/types';
+import { Chain, InvoiceStatus } from '@mintit/types';
 import { InvoiceResponseDto } from '../invoices/dto/invoice-response.dto';
-
-type LeanInvoice = Invoice & {
-  _id: Types.ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly chains: ChainsService,
-    @InjectModel(Invoice.name) private invoiceModel: Model<InvoiceDocument>,
+    @InjectRepository(Invoice) private invoiceRepo: Repository<Invoice>,
   ) {}
 
   async getWalletInfo(chain: Chain): Promise<WalletInfoResponseDto> {
@@ -30,16 +24,16 @@ export class AdminService {
   }
 
   async getStats(chain: Chain): Promise<StatsResponseDto> {
-    const [volumeResult] = await this.invoiceModel.aggregate([
-      { $match: { chain, status: 'confirmed' } },
-      {
-        $group: { _id: null, total: { $sum: { $toLong: '$receivedAtomic' } } },
-      },
-    ]);
+    const raw = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .select('COALESCE(SUM(invoice."receivedAtomic"::numeric), 0)', 'total')
+      .where('invoice.chain = :chain', { chain })
+      .andWhere('invoice.status = :status', {
+        status: InvoiceStatus.Confirmed,
+      })
+      .getRawOne<{ total: string }>();
 
-    const confirmedVolumeAtomic = volumeResult
-      ? String(volumeResult.total)
-      : '0';
+    const confirmedVolumeAtomic = raw?.total ?? '0';
 
     const wallet = await this.chains.get(chain).getWalletInfo();
 
@@ -53,30 +47,26 @@ export class AdminService {
     query: InvoiceListQueryDto,
   ): Promise<InvoiceListResponseDto> {
     const { status, page = 1, limit = 20, chain = Chain.Xmr, publicId } = query;
-    const filter: Record<string, unknown> = {};
+    const where: Partial<Pick<Invoice, 'publicId' | 'chain' | 'status'>> = {};
 
     if (publicId) {
-      filter.publicId = publicId;
+      where.publicId = publicId;
     } else {
-      filter.chain = chain;
-      if (status) filter.status = status;
+      where.chain = chain;
+      if (status) where.status = status;
     }
 
     const skip = (page - 1) * limit;
 
-    const [docs, total] = await Promise.all([
-      this.invoiceModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean<LeanInvoice[]>()
-        .exec(),
-      this.invoiceModel.countDocuments(filter),
-    ]);
+    const [docs, total] = await this.invoiceRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
 
     const data = docs.map((doc) => ({
-      id: doc._id.toString(),
+      id: doc.id,
       publicId: doc.publicId,
       chain: doc.chain,
       asset: doc.asset,
@@ -105,18 +95,14 @@ export class AdminService {
   }
 
   async getInvoice(publicId: string): Promise<InvoiceResponseDto> {
-    const doc = await this.invoiceModel
-      .findOne({
-        publicId,
-      })
-      .lean<LeanInvoice>();
+    const doc = await this.invoiceRepo.findOne({ where: { publicId } });
 
     if (!doc) {
       throw new BadRequestException('Invoice not found');
     }
 
     return {
-      id: doc._id.toString(),
+      id: doc.id,
       publicId: doc.publicId,
       chain: doc.chain,
       asset: doc.asset,

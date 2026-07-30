@@ -11,7 +11,6 @@ import { AdminModule } from './admin/admin.module';
 import { HealthModule } from './health/health.module';
 import { SettingsModule } from './settings/settings.module';
 import { ChainsModule } from './chains/chains.module';
-import { AppController } from './app.controller';
 import { Chain } from '@mintit/types';
 import { ViewsModule } from './views/views.module';
 
@@ -57,6 +56,5 @@ console.log('enabledChains from env:', enabledChains);
     SettingsModule,
     ViewsModule,
   ],
-  controllers: [AppController],
 })
 export class AppModule {}
