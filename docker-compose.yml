@@ -1,9 +1,9 @@
 name: mintit
 
 services:
-  mint_web:
-    container_name: mint_web
-    image: nexusocean.org/mintit/mint-web:latest
+  caddy:
+    container_name: caddy
+    image: caddy:2-alpine
     restart: unless-stopped
     ports:
       - 80:80
@@ -11,17 +11,18 @@ services:
     env_file:
       - .env
     depends_on:
-      mint_api:
+      mint_web:
         condition: service_healthy
     volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy-data:/data
       - caddy-config:/config
     networks:
       - mint_net
 
-  mint_api:
-    container_name: mint_api
-    image: nexusocean.org/mintit/mint-api:latest
+  mint_web:
+    container_name: mint_web
+    image: nexusocean.org/mintit/mint-web:latest
     restart: unless-stopped
     expose:
       - 3000
@@ -34,15 +35,13 @@ services:
       - wallet-data:/app/data/wallet
       - app-data:/app/data/jwt
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/v1/health/ready"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/v1/health/ready']
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
     networks:
       - mint_net
-      - firo_net
-      - monero_net
 
   mint_db:
     container_name: mint_db
@@ -53,14 +52,13 @@ services:
     env_file:
       - .env
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql
     networks:
       - mint_net
 
 volumes:
   wallet-data:
   app-data:
-  postgres-data:
   caddy-data:
   caddy-config:
 

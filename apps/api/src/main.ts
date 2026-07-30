@@ -4,7 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import * as nunjucks from 'nunjucks';
 
@@ -19,9 +19,8 @@ async function bootstrap() {
     logger: ['error', 'warn', 'debug', 'log'],
   });
 
-  // mint_api is only ever reached via the mint_web (Caddy) reverse proxy on
-  // the shared Docker network — trust exactly that one hop's X-Forwarded-For
-  // so req.ip reflects the real client instead of Caddy's container IP.
+  // Trust exactly one hop's X-Forwarded-For so req.ip
+  // reflects the real client instead of Caddy's or mint_web's container IP.
   app.set('trust proxy', 1);
 
   app.use(helmet());
@@ -32,7 +31,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
-  app.setGlobalPrefix('v1', { exclude: ['/', '/i/:publicId'] });
+  app.setGlobalPrefix('v1', { exclude: ['/i/:publicId'] });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -71,6 +70,21 @@ async function bootstrap() {
   });
 
   app.useStaticAssets(join(__dirname, 'public'));
+
+  const webDist = join(__dirname, 'web');
+  if (existsSync(webDist)) {
+    app.useStaticAssets(webDist);
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .get(/.*/, (req, res, next) => {
+        if (req.path.startsWith('/v1') || req.path.startsWith('/i/')) {
+          next();
+          return;
+        }
+        res.sendFile(join(webDist, 'index.html'));
+      });
+  }
 
   await app.listen(3000);
 

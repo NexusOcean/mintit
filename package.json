@@ -7,14 +7,33 @@
     "start": "dotenvx run --env-file=.env.local -- turbo run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "prepare": "husky"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.75.1",
+    "husky": "^9.1.7",
     "turbo": "latest"
   },
   "packageManager": "pnpm@11.16.0",
   "devDependencies": {
+    "lint-staged": "^17.2.0",
     "prettier": "^3.9.4"
+  },
+  "lint-staged": {
+    "apps/api/**/*.ts": [
+      "pnpm --filter @mintit/api exec eslint --fix",
+      "prettier --write"
+    ],
+    "apps/web/**/*.{ts,tsx}": [
+      "pnpm --filter @mintit/web exec eslint --fix",
+      "prettier --write"
+    ],
+    "packages/**/*.ts": [
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

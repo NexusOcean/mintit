@@ -26,8 +26,8 @@ RUN pnpm --filter @mintit/types build
 RUN pnpm --filter @mintit/api build
 RUN pnpm --filter @mintit/web build
 
-# ─── api runtime ──────────────────────────────────────────────────────────────
-FROM node:24-slim AS api
+# ─── mint_web runtime (API + built SPA, served from one process) ──────────────
+FROM node:24-slim AS mint_web
 WORKDIR /app
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
@@ -43,23 +43,10 @@ RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/types/dist ./packages/types/dist
+COPY --from=builder /app/apps/web/dist ./apps/api/dist/src/web
 
 RUN mkdir -p /app/data/wallet /app/data/jwt && chown -R node:node /app/data
 
 USER node
 ENV NODE_ENV=production
 CMD ["node", "apps/api/dist/src/main.js"]
-
-# ─── caddy builder (with rate-limit plugin) ───────────────────────────────────
-FROM caddy:2-builder AS caddy-builder
-
-RUN xcaddy build --with github.com/mholt/caddy-ratelimit
-
-# ─── web runtime ──────────────────────────────────────────────────────────────
-FROM caddy:2-alpine AS web
-
-COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY --from=builder /app/apps/web/dist /usr/share/caddy
-
-EXPOSE 80 443
