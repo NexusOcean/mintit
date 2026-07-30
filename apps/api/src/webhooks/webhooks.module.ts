@@ -6,13 +6,12 @@ import {
 import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule, SchedulerRegistry } from '@nestjs/schedule';
-import { ConfigService } from '@nestjs/config';
 import { WebhooksService } from './webhooks.service';
 import {
   WebhookDelivery,
   WebhookDeliverySchema,
 } from './schemas/webhook-delivery.schema';
-import type { EnvironmentVariables } from '../config/env.validation';
+import { TUNABLE_DEFAULTS } from '../config/tunable-defaults';
 import { SettingsModule } from '../settings/settings.module';
 
 const INTERVAL_NAME = 'webhook-dispatch-tick';
@@ -33,14 +32,12 @@ export class WebhooksModule implements OnApplicationBootstrap, OnModuleDestroy {
   constructor(
     private readonly registry: SchedulerRegistry,
     private readonly webhooks: WebhooksService,
-    private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
 
   onApplicationBootstrap(): void {
-    const ms = this.config.get('WEBHOOK_DISPATCH_INTERVAL_MS', { infer: true });
     const handle = setInterval(() => {
       void this.webhooks.dispatchDue();
-    }, ms);
+    }, TUNABLE_DEFAULTS.WEBHOOK_DISPATCH_INTERVAL_MS);
     this.registry.addInterval(INTERVAL_NAME, handle);
   }
 

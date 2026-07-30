@@ -5,12 +5,17 @@ import {
   Param,
   ParseUUIDPipe,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import * as QRCode from 'qrcode';
 import { ViewsService } from './views.service';
+import { InvoiceThrottlerGuard } from './invoice-throttler.guard';
 
 @Controller()
+@UseGuards(InvoiceThrottlerGuard)
+@Throttle({ default: { ttl: 60_000, limit: 25 } })
 export class ViewsController {
   constructor(private readonly viewsService: ViewsService) {}
 

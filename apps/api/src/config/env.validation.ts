@@ -54,8 +54,12 @@ export class EnvironmentVariables {
   PORT: number = 3000;
 
   // --- Mongo ---
+  // Optional: if unset, falls back to creds generated/read from
+  // MONGO_CREDS_DIR (see config/mongo-uri.ts) for the bundled mint_db
+  // container. Set explicitly to point at a self-managed/hosted Mongo.
   @IsString()
-  MONGO_URI!: string;
+  @IsOptional()
+  MONGO_URI?: string;
 
   @IsString()
   @IsOptional()
@@ -155,10 +159,6 @@ export class EnvironmentVariables {
   API_KEY!: string;
 
   @IsString()
-  @MinLength(16)
-  ADMIN_API_KEY!: string;
-
-  @IsString()
   @IsOptional()
   DEMO_ADMIN_TOTP?: string;
 
@@ -166,66 +166,10 @@ export class EnvironmentVariables {
   @IsString()
   WEBHOOK_SIGNING_SECRET!: string;
 
-  // --- Tunable defaults (seed values; live values stored in Mongo Settings doc) ---
-  @Transform(toInt)
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  CONFIRMATION_DEPTH: number = 1;
-
-  @Transform(toInt)
-  @IsInt()
-  @Min(60)
-  @IsOptional()
-  INVOICE_DEFAULT_EXPIRY_SEC: number = 20 * 60;
-
-  @Transform(toInt)
-  @IsInt()
-  @Min(60)
-  @IsOptional()
-  INVOICE_MAX_EXPIRY_SEC: number = 30 * 60;
-
-  @Transform(toInt)
-  @IsInt()
-  @IsOptional()
-  SCANNER_INTERVAL_MS: number = 10_000;
-
-  @Transform(toInt)
-  @IsInt()
-  @IsOptional()
-  SCANNER_LOCK_TTL_MS: number = 30_000;
-
-  @Transform(toInt)
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  MONERO_SYNCED_THRESHOLD_BLOCKS: number = 2;
-
   @Transform(toBool)
   @IsBoolean()
   @IsOptional()
   MONERO_PREWARM_SYNC: boolean = true;
-
-  @Transform(toInt)
-  @IsInt()
-  @IsOptional()
-  RATE_CACHE_TTL_MS: number = 45_000;
-
-  @Transform(toInt)
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  WEBHOOK_MAX_ATTEMPTS: number = 8;
-
-  @Transform(toInt)
-  @IsInt()
-  @IsOptional()
-  WEBHOOK_DISPATCH_INTERVAL_MS: number = 5_000;
-
-  @Transform(toInt)
-  @IsInt()
-  @IsOptional()
-  WEBHOOK_TIMEOUT_MS: number = 10_000;
 
   // --- Enabled chains ---
   @Transform(toChainArray)

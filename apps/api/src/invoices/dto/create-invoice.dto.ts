@@ -88,7 +88,7 @@ export class CreateInvoiceDto {
   @ApiPropertyOptional({
     example: 3,
     description:
-      'Override confirmations required. Defaults to CONFIRMATION_DEPTH.',
+      'Override confirmations required. Defaults to the chain settings value.',
     minimum: 1,
   })
   @ValidateIf((o) => o.confirmationsRequired !== undefined)

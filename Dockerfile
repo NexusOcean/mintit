@@ -44,17 +44,31 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/types/dist ./packages/types/dist
 
-RUN mkdir -p /app/data/wallet && chown -R node:node /app/data
+RUN mkdir -p /app/data/wallet /app/data/jwt && chown -R node:node /app/data
 
 USER node
 ENV NODE_ENV=production
 CMD ["node", "apps/api/dist/src/main.js"]
 
+# ─── mongo runtime (auto-generates creds if not provided in .env) ─────────────
+FROM mongo:7 AS mongo
+
+COPY mongo-entrypoint.sh /usr/local/bin/mongo-entrypoint.sh
+RUN chmod +x /usr/local/bin/mongo-entrypoint.sh
+
+ENTRYPOINT ["mongo-entrypoint.sh"]
+CMD ["mongod"]
+
+# ─── caddy builder (with rate-limit plugin) ───────────────────────────────────
+FROM caddy:2-builder AS caddy-builder
+
+RUN xcaddy build --with github.com/mholt/caddy-ratelimit
+
 # ─── web runtime ──────────────────────────────────────────────────────────────
-FROM nginx:alpine AS web
+FROM caddy:2-alpine AS web
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=builder /app/apps/web/dist /usr/share/caddy
 
-EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80 443

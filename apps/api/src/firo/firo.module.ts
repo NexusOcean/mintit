@@ -17,6 +17,7 @@ import { SettingsModule } from '../settings/settings.module';
 import { FiroAdapter } from '../chains/firo-adapter';
 import { ChainsService } from '../chains/chains.service';
 import type { EnvironmentVariables } from '../config/env.validation';
+import { TUNABLE_DEFAULTS } from '../config/tunable-defaults';
 import { Chain } from '@mintit/types';
 
 const INTERVAL_NAME = 'firo-payment-scanner-tick';
@@ -60,10 +61,9 @@ export class FiroModule implements OnApplicationBootstrap, OnModuleDestroy {
   onApplicationBootstrap(): void {
     this.chainsService.register(Chain.Firo, this.firoAdapter);
 
-    const ms = this.config.get('SCANNER_INTERVAL_MS', { infer: true });
     const handle = setInterval(() => {
       void this.scanner.tick();
-    }, ms);
+    }, TUNABLE_DEFAULTS.SCANNER_INTERVAL_MS);
     this.registry.addInterval(INTERVAL_NAME, handle);
   }
 

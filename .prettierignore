@@ -1,7 +1,7 @@
 node_modules
 dist
-.next
 .turbo
 coverage
-pnpm-lock.yaml
 LICENSE
+pnpm-lock.yaml
+app/api/docs/swagger.json

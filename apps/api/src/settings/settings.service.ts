@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Model } from 'mongoose';
 import { Settings, SettingsDocument } from './schemas/settings.schema';
 import type { EnvironmentVariables } from '../config/env.validation';
+import { TUNABLE_DEFAULTS } from '../config/tunable-defaults';
 import { Chain } from '@mintit/types';
 
 export interface GlobalSettingsFields {
@@ -55,15 +56,10 @@ export class SettingsService implements OnModuleInit {
     }
 
     const seed: GlobalSettingsFields = {
-      rateCacheTtlMs: this.config.get('RATE_CACHE_TTL_MS', { infer: true }),
-      webhookMaxAttempts: this.config.get('WEBHOOK_MAX_ATTEMPTS', {
-        infer: true,
-      }),
-      webhookTimeoutMs: this.config.get('WEBHOOK_TIMEOUT_MS', { infer: true }),
-      webhookDispatchIntervalMs: this.config.get(
-        'WEBHOOK_DISPATCH_INTERVAL_MS',
-        { infer: true },
-      ),
+      rateCacheTtlMs: TUNABLE_DEFAULTS.RATE_CACHE_TTL_MS,
+      webhookMaxAttempts: TUNABLE_DEFAULTS.WEBHOOK_MAX_ATTEMPTS,
+      webhookTimeoutMs: TUNABLE_DEFAULTS.WEBHOOK_TIMEOUT_MS,
+      webhookDispatchIntervalMs: TUNABLE_DEFAULTS.WEBHOOK_DISPATCH_INTERVAL_MS,
     };
 
     await this.model.updateOne(
@@ -89,17 +85,11 @@ export class SettingsService implements OnModuleInit {
 
     const seed: SettingsFields = {
       ...this.getGlobal(),
-      confirmationDepth: this.config.get('CONFIRMATION_DEPTH', { infer: true }),
-      invoiceDefaultExpirySec: this.config.get('INVOICE_DEFAULT_EXPIRY_SEC', {
-        infer: true,
-      }),
-      invoiceMaxExpirySec: this.config.get('INVOICE_MAX_EXPIRY_SEC', {
-        infer: true,
-      }),
-      scannerLockTtlMs: this.config.get('SCANNER_LOCK_TTL_MS', { infer: true }),
-      syncedThresholdBlocks: this.config.get('MONERO_SYNCED_THRESHOLD_BLOCKS', {
-        infer: true,
-      }),
+      confirmationDepth: TUNABLE_DEFAULTS.CONFIRMATION_DEPTH,
+      invoiceDefaultExpirySec: TUNABLE_DEFAULTS.INVOICE_DEFAULT_EXPIRY_SEC,
+      invoiceMaxExpirySec: TUNABLE_DEFAULTS.INVOICE_MAX_EXPIRY_SEC,
+      scannerLockTtlMs: TUNABLE_DEFAULTS.SCANNER_LOCK_TTL_MS,
+      syncedThresholdBlocks: TUNABLE_DEFAULTS.MONERO_SYNCED_THRESHOLD_BLOCKS,
     };
 
     await this.model.updateOne(
