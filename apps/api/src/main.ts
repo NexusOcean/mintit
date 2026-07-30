@@ -19,6 +19,11 @@ async function bootstrap() {
     logger: ['error', 'warn', 'debug', 'log'],
   });
 
+  // mint_api is only ever reached via the mint_web (Caddy) reverse proxy on
+  // the shared Docker network — trust exactly that one hop's X-Forwarded-For
+  // so req.ip reflects the real client instead of Caddy's container IP.
+  app.set('trust proxy', 1);
+
   app.use(helmet());
 
   app.enableCors({
