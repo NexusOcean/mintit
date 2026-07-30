@@ -18,7 +18,7 @@ import axios from 'axios';
 import { api } from '@/src/lib/api';
 import { HEADING, MUTED } from '@/src/lib/theme';
 
-export default function ProfilePage() {
+export default function Profile() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 

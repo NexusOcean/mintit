@@ -24,7 +24,7 @@ import {
   IconUser,
   IconWallet,
 } from '@tabler/icons-react';
-import { ChainProvider, useChain } from '@/src/lib/chain-context';
+import { ChainProvider, useChain } from '@/src/context/ChainContext';
 import { Chain } from '@mintit/types';
 import { api, clearToken, getToken } from '@/src/lib/api';
 import { BORDER, CARD_BORDER, HEADING, PRIMARY } from '@/src/lib/theme';

@@ -5,6 +5,7 @@ import {
   type CSSVariablesResolver,
   type MantineColorsTuple,
 } from '@mantine/core';
+import { InvoiceStatus } from '@mintit/types';
 
 const brand: MantineColorsTuple = [
   '#f0f7f3', // [0]
@@ -85,7 +86,6 @@ export const theme = createTheme({
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const cssVariablesResolver: CSSVariablesResolver = (_theme) => {
   const shared = {
     '--mantine-color-body': '#10141a',
@@ -111,3 +111,35 @@ export const TEXT = '#f2f5f7';
 export const MUTED = '#8a95a3';
 export const HEADING = 'var(--font-space-mono), monospace';
 export const SANS = 'var(--font-space-grotesk), sans-serif';
+
+export const STATUS_COLORS: Record<
+  InvoiceStatus,
+  { color: string; bg: string; border: string }
+> = {
+  pending: {
+    color: 'var(--mantine-color-dark-1)',
+    bg: 'var(--mantine-color-dark-5)',
+    border: 'var(--mantine-color-dark-4)',
+  },
+  seen: {
+    color: '#93c5fd',
+    bg: 'rgba(96,165,250,0.1)',
+    border: 'rgba(96,165,250,0.25)',
+  },
+  confirmed: { color: PRIMARY, bg: `${PRIMARY}11`, border: `${PRIMARY}33` },
+  underpaid: {
+    color: '#fcd34d',
+    bg: 'rgba(251,191,36,0.1)',
+    border: 'rgba(251,191,36,0.25)',
+  },
+  expired: {
+    color: 'var(--mantine-color-dark-2)',
+    bg: 'var(--mantine-color-dark-6)',
+    border: 'var(--mantine-color-dark-4)',
+  },
+  cancelled: {
+    color: '#f87171',
+    bg: 'rgba(248,113,113,0.1)',
+    border: 'rgba(248,113,113,0.25)',
+  },
+};

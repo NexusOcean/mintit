@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api } from './api';
+import { api } from '@/src/lib/api';
 import { Chain, ConfigResponseDto } from '@mintit/types';
 
 interface ChainContextValue {

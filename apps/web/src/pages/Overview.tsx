@@ -16,14 +16,16 @@ import {
   IconCircleX,
   IconAlertCircle,
 } from '@tabler/icons-react';
-import { api, type HealthReady, type HealthSynced } from '@/src/lib/api';
-import { useChain } from '@/src/lib/chain-context';
+import { isAxiosError } from 'axios';
+import { api } from '@/src/lib/api';
+import { useChain } from '@/src/context/ChainContext';
 import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
+import type { HealthReadyDto, HealthSyncedDto } from '@mintit/types';
 
 interface HealthResponse {
   live: { status: string };
-  ready: HealthReady;
-  synced: HealthSynced;
+  ready: HealthReadyDto;
+  synced: HealthSyncedDto;
 }
 
 interface Stats {
@@ -31,11 +33,26 @@ interface Stats {
   balance?: number;
 }
 
+// /health/ready responds with a non-2xx status when degraded, but the body
+// still carries the full check breakdown — recover it instead of losing the
+// whole panel to a rejected Promise.all.
+async function fetchHealthCheck<T>(path: string, chain: string): Promise<T> {
+  try {
+    const { data } = await api.get<T>(path, { params: { chain } });
+    return data;
+  } catch (err) {
+    if (isAxiosError(err) && err.response?.data) {
+      return err.response.data as T;
+    }
+    throw err;
+  }
+}
+
 async function fetchHealth(chain: string): Promise<HealthResponse> {
   const [live, ready, synced] = await Promise.all([
-    api.get('/health/live', { params: { chain } }).then((r) => r.data),
-    api.get('/health/ready', { params: { chain } }).then((r) => r.data),
-    api.get('/health/synced', { params: { chain } }).then((r) => r.data),
+    fetchHealthCheck<{ status: string }>('/health/live', chain),
+    fetchHealthCheck<HealthReadyDto>('/health/ready', chain),
+    fetchHealthCheck<HealthSyncedDto>('/health/synced', chain),
   ]);
   return { live, ready, synced };
 }
@@ -45,7 +62,7 @@ async function fetchStats(chain: string): Promise<Stats> {
   return data;
 }
 
-export default function OverviewPage() {
+export default function Overview() {
   const { chain } = useChain();
 
   const { data, isLoading } = useQuery({
