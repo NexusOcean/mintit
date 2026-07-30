@@ -4,4 +4,4 @@ dist
 coverage
 LICENSE
 pnpm-lock.yaml
-app/api/docs/swagger.json
+apps/api/docs/swagger.json
