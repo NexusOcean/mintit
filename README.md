@@ -26,7 +26,9 @@
 - [x] Hosted checkout page
 - [x] Additional coin support
 - [x] Configurable coin price sources
-- [ ] TBA
+- [ ] Transparent address opt in per coin
+- [ ] View key only support for transparent
+- [ ] Direct invoice creation for merchants
 
 ### Phase 3 — Developer Experience (TBD)
 
