@@ -570,7 +570,7 @@ export default function Login() {
           </Stack>
           <PanelTerminal />
           <Group gap="md" mt={8}>
-            <StatChip label="chains" value="2" />
+            <StatChip label="chains" value="3" />
             <StatChip label="uptime" value="99.9%" />
             <StatChip label="privacy" value="100%" />
           </Group>

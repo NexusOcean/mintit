@@ -17,7 +17,7 @@ import ChainGate from './components/ChainGate';
 import { PageLoader } from './components/PageLoader';
 
 const Login = lazy(() => import('./pages/Login'));
-const DashboardLayout = lazy(() => import('./pages/DashboardLayout'));
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const Overview = lazy(() => import('./pages/Overview'));
 const Invoices = lazy(() => import('./pages/Invoices'));
 const InvoiceNew = lazy(() => import('./pages/InvoiceNew'));
