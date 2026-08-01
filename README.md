@@ -2,35 +2,28 @@
 
 ---
 
-### A self-hosted payment processor for privacy-focused cryptocurrencies. Accepts payments in fixed fiat amounts and notifies your application via webhooks. Currently supports Firo and Monero, work in progress.
+### A self-hosted payment processor for privacy-focused cryptocurrencies. Accepts payments in fixed fiat amounts and notifies your application via webhooks. Currently supports Firo, Monero, and Pivx.
 
 ## 📚 Current docs: **[mintit.dev](https://mintit.dev)**
 
 <img src="./images/overview.png" height="700" alt="mintit" />
 
-## Roadmap
+## 🚧 Under construction: no image has been published to Docker Hub yet; build from source for evaluation using docker compose.
 
-### Phase 1 — Core Payment Processor
+### Bring your own node
 
-- [x] Invoice-based payments with unique address per invoice
-- [x] Multi-chain support (Firo, XMR)
-- [x] Authenticated webhooks
-- [x] Admin dashboard
-- [x] Docker deployment
+`docker-compose.yml` doesn't bundle `monerod`/`firod`/`pivxd` — point the `*_DAEMON_URI` / `*_RPC_HOST` vars in `.env` at a node you already run. If that node also runs in Docker, attach it to the `mint_net` network so `mint_web` can reach it by container name:
 
-### Phase 2 — Merchant Focus
+```yaml
+services:
+  your_node:
+    networks:
+      - mint_net
 
-- [x] 2FA
-- [x] Per-invoice coin selection
-- [x] Invoice memos
-- [x] Hosted checkout page
-- [x] Additional coin support
-- [x] Configurable coin price sources
-- [ ] Transparent address opt in per coin
-- [ ] View key only support for transparent
-- [ ] Direct invoice creation for merchants
-
-### Phase 3 — Developer Experience (TBD)
+networks:
+  mint_net:
+    external: true
+```
 
 ## Development
 
