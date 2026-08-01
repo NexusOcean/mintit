@@ -16,40 +16,89 @@ import { IconCheck } from '@tabler/icons-react';
 import { isAxiosError } from 'axios';
 import { api } from '@/src/lib/api';
 import type { SettingsDto, GlobalSettingsDto } from '@mintit/types';
-import { useChain } from '@/src/context/ChainContext';
+import { useReadyChain } from '@/src/context/ChainContext';
 import { HEADING, MUTED } from '@/src/lib/theme';
 
-const CHAIN_FIELDS: { key: keyof SettingsDto; label: string; unit: string }[] =
-  [
-    { key: 'confirmationDepth', label: 'Confirmation Depth', unit: 'blocks' },
-    {
-      key: 'invoiceDefaultExpirySec',
-      label: 'Invoice Default Expiry',
-      unit: 'seconds',
-    },
-    {
-      key: 'invoiceMaxExpirySec',
-      label: 'Invoice Max Expiry',
-      unit: 'seconds',
-    },
-    { key: 'scannerLockTtlMs', label: 'Scanner Lock TTL', unit: 'ms' },
-    { key: 'syncedThresholdBlocks', label: 'Sync Threshold', unit: 'blocks' },
-  ];
+// display: how a field's stored (backend) value is converted for editing in the UI.
+// 'sec-to-min' divides by 60 for display and multiplies by 60 on save (stored unit: seconds).
+// 'ms-to-sec' divides by 1000 for display and multiplies by 1000 on save (stored unit: ms).
+type FieldDisplay = 'none' | 'sec-to-min' | 'ms-to-sec';
+
+const CHAIN_FIELDS: {
+  key: keyof SettingsDto;
+  label: string;
+  unit: string;
+  display: FieldDisplay;
+}[] = [
+  {
+    key: 'confirmationDepth',
+    label: 'Confirmation Depth',
+    unit: 'blocks',
+    display: 'none',
+  },
+  {
+    key: 'invoiceDefaultExpirySec',
+    label: 'Invoice Default Expiry',
+    unit: 'minutes',
+    display: 'sec-to-min',
+  },
+  {
+    key: 'scannerLockTtlMs',
+    label: 'Scanner Lock TTL',
+    unit: 'seconds',
+    display: 'ms-to-sec',
+  },
+  {
+    key: 'syncedThresholdBlocks',
+    label: 'Sync Threshold',
+    unit: 'blocks',
+    display: 'none',
+  },
+];
 
 const GLOBAL_FIELDS: {
   key: keyof GlobalSettingsDto;
   label: string;
   unit: string;
+  display: FieldDisplay;
 }[] = [
-  { key: 'rateCacheTtlMs', label: 'Rate Cache TTL', unit: 'ms' },
-  { key: 'webhookMaxAttempts', label: 'Webhook Max Attempts', unit: 'retries' },
-  { key: 'webhookTimeoutMs', label: 'Webhook Timeout', unit: 'ms' },
+  {
+    key: 'rateCacheTtlMs',
+    label: 'Rate Cache TTL',
+    unit: 'seconds',
+    display: 'ms-to-sec',
+  },
+  {
+    key: 'webhookMaxAttempts',
+    label: 'Webhook Max Attempts',
+    unit: 'retries',
+    display: 'none',
+  },
+  {
+    key: 'webhookTimeoutMs',
+    label: 'Webhook Timeout',
+    unit: 'seconds',
+    display: 'ms-to-sec',
+  },
   {
     key: 'webhookDispatchIntervalMs',
     label: 'Webhook Dispatch Interval',
-    unit: 'ms',
+    unit: 'seconds',
+    display: 'ms-to-sec',
   },
 ];
+
+function toDisplay(value: number, display: FieldDisplay): number {
+  if (display === 'sec-to-min') return value / 60;
+  if (display === 'ms-to-sec') return value / 1000;
+  return value;
+}
+
+function fromDisplay(value: number, display: FieldDisplay): number {
+  if (display === 'sec-to-min') return Math.round(value * 60);
+  if (display === 'ms-to-sec') return Math.round(value * 1000);
+  return value;
+}
 
 function fetchSettings(chain: string): Promise<SettingsDto> {
   return api.get('/admin/settings', { params: { chain } }).then((r) => r.data);
@@ -64,9 +113,13 @@ function FieldList({
   draft,
   onChange,
 }: {
-  fields: { key: string; label: string; unit: string }[];
+  fields: { key: string; label: string; unit: string; display: FieldDisplay }[];
   draft: Record<string, number>;
-  onChange: (key: string, value: string | number) => void;
+  onChange: (
+    key: string,
+    value: string | number,
+    display: FieldDisplay,
+  ) => void;
 }) {
   return (
     <Paper
@@ -77,7 +130,7 @@ function FieldList({
         overflow: 'hidden',
       }}
     >
-      {fields.map(({ key, label, unit }, i) => (
+      {fields.map(({ key, label, unit, display }, i) => (
         <Box
           key={String(key)}
           style={{
@@ -104,8 +157,8 @@ function FieldList({
           </Text>
           <Group gap="sm" align="center">
             <NumberInput
-              value={draft[key]}
-              onChange={(v) => onChange(key, v)}
+              value={toDisplay(draft[key], display)}
+              onChange={(v) => onChange(key, v, display)}
               min={0}
               hideControls
               size="xs"
@@ -189,7 +242,7 @@ function SaveRow({
 }
 
 export default function Settings() {
-  const { chain } = useChain();
+  const chain = useReadyChain();
   const queryClient = useQueryClient();
 
   const { data: chainData, isLoading: chainLoading } = useQuery({
@@ -262,19 +315,26 @@ export default function Settings() {
     },
   });
 
-  function handleChainChange(key: keyof SettingsDto, value: string | number) {
-    const num = typeof value === 'string' ? parseInt(value, 10) : value;
+  function handleChainChange(
+    key: keyof SettingsDto,
+    value: string | number,
+    display: FieldDisplay,
+  ) {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(num)) return;
-    setChainDraft((prev) => (prev ? { ...prev, [key]: num } : prev));
+    const stored = fromDisplay(num, display);
+    setChainDraft((prev) => (prev ? { ...prev, [key]: stored } : prev));
   }
 
   function handleGlobalChange(
     key: keyof GlobalSettingsDto,
     value: string | number,
+    display: FieldDisplay,
   ) {
-    const num = typeof value === 'string' ? parseInt(value, 10) : value;
+    const num = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(num)) return;
-    setGlobalDraft((prev) => (prev ? { ...prev, [key]: num } : prev));
+    const stored = fromDisplay(num, display);
+    setGlobalDraft((prev) => (prev ? { ...prev, [key]: stored } : prev));
   }
 
   if (chainLoading || globalLoading || !chainDraft || !globalDraft) {
@@ -303,11 +363,11 @@ export default function Settings() {
 
         {/* Chain settings */}
         <FieldList
-          fields={
-            CHAIN_FIELDS as { key: string; label: string; unit: string }[]
-          }
+          fields={CHAIN_FIELDS}
           draft={chainDraft as unknown as Record<string, number>}
-          onChange={(k, v) => handleChainChange(k as keyof SettingsDto, v)}
+          onChange={(k, v, display) =>
+            handleChainChange(k as keyof SettingsDto, v, display)
+          }
         />
         <SaveRow
           dirty={chainDirty}
@@ -325,12 +385,10 @@ export default function Settings() {
           Global Settings
         </Title>
         <FieldList
-          fields={
-            GLOBAL_FIELDS as { key: string; label: string; unit: string }[]
-          }
+          fields={GLOBAL_FIELDS}
           draft={globalDraft as unknown as Record<string, number>}
-          onChange={(k, v) =>
-            handleGlobalChange(k as keyof GlobalSettingsDto, v)
+          onChange={(k, v, display) =>
+            handleGlobalChange(k as keyof GlobalSettingsDto, v, display)
           }
         />
         <SaveRow

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Box,
@@ -19,7 +19,6 @@ import { api } from '@/src/lib/api';
 import { HEADING, MUTED } from '@/src/lib/theme';
 
 export default function Profile() {
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const { data: me } = useQuery({
@@ -45,29 +44,42 @@ export default function Profile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me]);
 
-  const handleSubmit = form.onSubmit(
-    async ({ email, password, newPassword }) => {
-      setError(null);
-      setSuccess(false);
-      try {
-        await api.patch('/auth/update', {
-          email,
-          password,
-          ...(newPassword ? { newPassword } : {}),
-        });
-        setSuccess(true);
-        form.setFieldValue('password', '');
-        form.setFieldValue('newPassword', '');
-        setTimeout(() => setSuccess(false), 3000);
-      } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
-          setError('Invalid credentials');
-        } else {
-          setError('Something went wrong');
-        }
-      }
+  const mutation = useMutation({
+    mutationFn: async ({
+      email,
+      password,
+      newPassword,
+    }: {
+      email: string;
+      password: string;
+      newPassword: string;
+    }) => {
+      await api.patch('/auth/update', {
+        email,
+        password,
+        ...(newPassword ? { newPassword } : {}),
+      });
     },
-  );
+    onSuccess: () => {
+      form.setFieldValue('password', '');
+      form.setFieldValue('newPassword', '');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    },
+  });
+
+  const errorMessage =
+    axios.isAxiosError(mutation.error) &&
+    mutation.error.response?.status === 401
+      ? 'Invalid credentials'
+      : mutation.error
+        ? 'Something went wrong'
+        : null;
+
+  const handleSubmit = form.onSubmit((values) => {
+    setSuccess(false);
+    mutation.mutate(values);
+  });
 
   return (
     <Box maw={480}>
@@ -154,14 +166,14 @@ export default function Profile() {
                 {...form.getInputProps('newPassword')}
               />
 
-              {error && (
+              {errorMessage && (
                 <Alert
                   color="red"
                   radius="sm"
                   p="sm"
                   styles={{ message: { fontSize: 12 } }}
                 >
-                  {error}
+                  {errorMessage}
                 </Alert>
               )}
 
@@ -185,7 +197,7 @@ export default function Profile() {
                 color="brand"
                 fullWidth
                 size="sm"
-                loading={form.submitting}
+                loading={mutation.isPending}
                 style={{ fontFamily: HEADING, marginTop: 4 }}
               >
                 Save changes

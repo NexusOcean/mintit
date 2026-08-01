@@ -5,10 +5,13 @@ import { InvoiceResponseDto } from '../../invoices/dto/invoice-response.dto';
 import { Chain, InvoiceStatus } from '@mintit/types';
 
 export class InvoiceListQueryDto {
-  @ApiPropertyOptional({ enum: Chain, default: Chain.Xmr })
+  @ApiPropertyOptional({
+    enum: Chain,
+    description: 'Omit to list invoices across all chains',
+  })
   @IsOptional()
   @IsEnum(Chain)
-  chain?: Chain = Chain.Xmr;
+  chain?: Chain;
 
   @ApiPropertyOptional({ enum: InvoiceStatus })
   @IsOptional()

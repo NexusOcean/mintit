@@ -10,7 +10,7 @@ export function formatAtomic(
   return `${val} ${ticker.toUpperCase()}`;
 }
 
-export function fmt(iso: string) {
+export function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',

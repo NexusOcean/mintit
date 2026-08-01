@@ -27,6 +27,7 @@ import {
 import { ChainProvider, useChain } from '@/src/context/ChainContext';
 import { Chain } from '@mintit/types';
 import { api, clearToken, getToken } from '@/src/lib/api';
+import { PageLoader } from '@/src/components/PageLoader';
 import { BORDER, CARD_BORDER, HEADING, PRIMARY } from '@/src/lib/theme';
 
 const NAV_ITEMS = [
@@ -58,8 +59,7 @@ function NavItem({
 }: NavItemProps) {
   const { pathname } = useLocation();
   const [hovered, setHovered] = useState(false);
-  const active =
-    pathname === path || (path !== '/' && pathname.startsWith(path));
+  const active = path === '/' ? pathname === path : pathname.startsWith(path);
 
   return (
     <Tooltip label={label} position="right" disabled={!collapsed}>
@@ -103,7 +103,7 @@ function DashboardShell() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutHovered, setLogoutHovered] = useState(false);
   const [collapseHovered, setCollapseHovered] = useState(false);
-  const { chain, setChain, enabledChains } = useChain();
+  const { chain, setChain, enabledChains, status } = useChain();
   const navigate = useNavigate();
 
   const sidebarWidth = collapsed ? 60 : 220;
@@ -129,10 +129,14 @@ function DashboardShell() {
     staleTime: 0,
   });
 
-  const chainOptions =
-    enabledChains.length > 0
-      ? enabledChains.map((c) => ({ value: c, label: c.toUpperCase() }))
-      : [{ value: Chain.Firo, label: 'FIRO' }];
+  const chainOptions = enabledChains.map((c) => ({
+    value: c,
+    label: c.toUpperCase(),
+  }));
+
+  if (status !== 'ready') {
+    return <PageLoader />;
+  }
 
   return (
     <AppShell

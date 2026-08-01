@@ -46,10 +46,11 @@ const terminalLines: { text: string; delay: number; color?: string }[] = [
   { text: '$ mintit status', delay: 0 },
   { text: 'CHAIN    STATUS     HEIGHT', delay: 600, color: MUTED },
   { text: 'firo     synced     1,330,612', delay: 1000, color: PRIMARY },
-  { text: 'xmr      synced     3,204,891', delay: 1300, color: PRIMARY },
-  { text: '', delay: 1800 },
-  { text: '$ mintit invoices --status confirmed', delay: 2200 },
-  { text: '✓ 3 confirmed invoices today', delay: 3000, color: PRIMARY },
+  { text: 'xmr      synced     3,204,891', delay: 1400, color: PRIMARY },
+  { text: 'pivx     synced     2,118,447', delay: 1800, color: PRIMARY },
+  { text: '', delay: 2100 },
+  { text: '$ mintit invoices --status confirmed', delay: 2500 },
+  { text: '✓ 3 confirmed invoices today', delay: 3300, color: PRIMARY },
 ];
 
 function PanelTerminal() {

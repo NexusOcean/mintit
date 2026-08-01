@@ -107,7 +107,6 @@ export interface GlobalSettingsDto {
 export interface SettingsDto extends GlobalSettingsDto {
   confirmationDepth: number;
   invoiceDefaultExpirySec: number;
-  invoiceMaxExpirySec: number;
   scannerLockTtlMs: number;
   syncedThresholdBlocks: number;
 }

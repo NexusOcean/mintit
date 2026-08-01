@@ -11,13 +11,20 @@ import { Invoice } from '../invoices/schemas/invoice.entity';
 import { StatsResponseDto } from './dto/wallet-stats.dto';
 import { Chain, InvoiceStatus } from '@mintit/types';
 import { InvoiceResponseDto } from '../invoices/dto/invoice-response.dto';
+import { InvoicesService } from '../invoices/invoices.service';
+import { CreateInvoiceDto } from '../invoices/dto/create-invoice.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly chains: ChainsService,
     @InjectRepository(Invoice) private invoiceRepo: Repository<Invoice>,
+    private readonly invoices: InvoicesService,
   ) {}
+
+  async createInvoice(dto: CreateInvoiceDto): Promise<InvoiceResponseDto> {
+    return this.invoices.create(dto);
+  }
 
   async getWalletInfo(chain: Chain): Promise<WalletInfoResponseDto> {
     return this.chains.get(chain).getWalletInfo();
@@ -48,13 +55,13 @@ export class AdminService {
   async listInvoices(
     query: InvoiceListQueryDto,
   ): Promise<InvoiceListResponseDto> {
-    const { status, page = 1, limit = 20, chain = Chain.Xmr, publicId } = query;
+    const { status, page = 1, limit = 20, chain, publicId } = query;
     const where: Partial<Pick<Invoice, 'publicId' | 'chain' | 'status'>> = {};
 
     if (publicId) {
       where.publicId = publicId;
     } else {
-      where.chain = chain;
+      if (chain) where.chain = chain;
       if (status) where.status = status;
     }
 

@@ -1,7 +1,7 @@
 import { Group, Stack, Text } from '@mantine/core';
 import type { InvoiceDto, InvoiceStatus } from '@mintit/types';
 import { HEADING, MUTED, STATUS_COLORS } from '@/src/lib/theme';
-import { fmt, formatAtomic } from '@/src/utils';
+import { formatDate, formatAtomic } from '@/src/utils';
 
 export function StatusBadge({ status }: { status: InvoiceStatus }) {
   const s = STATUS_COLORS[status];
@@ -52,14 +52,14 @@ export function InvoicePanel({ invoice }: { invoice: InvoiceDto }) {
       'Confirmations',
       `${invoice.confirmations} / ${invoice.confirmationsRequired}`,
     ],
-    ['Created', fmt(invoice.createdAt)],
-    ['Expires', fmt(invoice.expiresAt)],
+    ['Created', formatDate(invoice.createdAt)],
+    ['Expires', formatDate(invoice.expiresAt)],
     ...(invoice.memo ? [['Memo', invoice.memo] as [string, string]] : []),
     ...(invoice.firstSeenAt
-      ? [['First Seen', fmt(invoice.firstSeenAt)] as [string, string]]
+      ? [['First Seen', formatDate(invoice.firstSeenAt)] as [string, string]]
       : []),
     ...(invoice.paidAt
-      ? [['Paid', fmt(invoice.paidAt)] as [string, string]]
+      ? [['Paid', formatDate(invoice.paidAt)] as [string, string]]
       : []),
     ...(invoice.chainData?.txHash
       ? [['Tx Hash', String(invoice.chainData.txHash)] as [string, string]]

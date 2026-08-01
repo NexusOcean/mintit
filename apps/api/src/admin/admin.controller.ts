@@ -12,10 +12,12 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiUnauthorizedResponse,
   ApiQuery,
   ApiBadRequestResponse,
+  ApiServiceUnavailableResponse,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -28,6 +30,7 @@ import { StatsResponseDto } from './dto/wallet-stats.dto';
 import { Chain } from '@mintit/types';
 import { PayoutDto, PayoutResponseDto } from './dto/payout.dto';
 import { InvoiceResponseDto } from '../invoices/dto/invoice-response.dto';
+import { CreateInvoiceDto } from '../invoices/dto/create-invoice.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -60,7 +63,10 @@ export class AdminController {
   }
 
   @Get('invoices')
-  @ApiOperation({ summary: 'List invoices' })
+  @ApiOperation({
+    summary: 'List invoices',
+    description: 'Omit chain to list invoices across all enabled chains',
+  })
   @ApiOkResponse({ type: InvoiceListResponseDto })
   listInvoices(
     @Query() query: InvoiceListQueryDto,
@@ -85,6 +91,17 @@ export class AdminController {
     description: 'Invalid address or no spendable balance',
   })
   async payout(@Body() dto: PayoutDto): Promise<PayoutResponseDto> {
-    return this.admin.payout(dto.address, dto.chain ?? Chain.Firo);
+    return this.admin.payout(dto.address, dto.chain);
+  }
+
+  @Post('invoices')
+  @ApiOperation({ summary: 'Create invoice (admin-created)' })
+  @ApiCreatedResponse({ type: InvoiceResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Validation error',
+  })
+  @ApiServiceUnavailableResponse({ description: 'Price feed unavailable' })
+  createInvoice(@Body() dto: CreateInvoiceDto): Promise<InvoiceResponseDto> {
+    return this.admin.createInvoice(dto);
   }
 }

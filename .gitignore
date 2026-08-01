@@ -2,9 +2,9 @@ node_modules
 dist
 _temp
 .turbo
-.next
 *.sh
 .env
 .env.*
 !.env.example.*
 compose.yml
+apps/api/docs/swagger.json

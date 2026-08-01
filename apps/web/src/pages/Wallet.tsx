@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   ActionIcon,
   Alert,
@@ -30,7 +30,7 @@ import {
   type PivxWalletInfo,
 } from '@/src/lib/api';
 import type { WalletInfoDto } from '@mintit/types';
-import { useChain } from '@/src/context/ChainContext';
+import { useReadyChain } from '@/src/context/ChainContext';
 import { HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
 
 async function fetchWallet(chain: string): Promise<WalletInfoDto> {
@@ -39,7 +39,7 @@ async function fetchWallet(chain: string): Promise<WalletInfoDto> {
 }
 
 export default function Wallet() {
-  const { chain } = useChain();
+  const chain = useReadyChain();
   const { data, isLoading } = useQuery({
     queryKey: ['wallet', chain],
     queryFn: () => fetchWallet(chain),
@@ -63,9 +63,11 @@ export default function Wallet() {
     );
   }
 
+  if (chain === 'xmr') return <XmrWallet data={data as XmrWalletInfo} />;
   if (chain === 'firo') return <FiroWallet data={data as FiroWalletInfo} />;
   if (chain === 'pivx') return <PivxWallet data={data as PivxWalletInfo} />;
-  return <XmrWallet data={data as XmrWalletInfo} />;
+
+  return chain satisfies never;
 }
 
 function XmrWallet({ data }: { data: XmrWalletInfo }) {
@@ -182,29 +184,19 @@ function SweepPanel({
   available: string;
 }) {
   const [address, setAddress] = useState('');
-  const [txid, setTxid] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handlePayout() {
-    setError(null);
-    setTxid(null);
-    setLoading(true);
-    try {
-      const { data: res } = await api.post('/admin/payout', {
-        address,
-        chain,
-      });
-      setTxid(res.txid);
-    } catch (err: unknown) {
-      const msg = isAxiosError(err)
-        ? (err.response?.data?.message ?? 'Payout failed')
-        : 'Payout failed';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/admin/payout', { address, chain });
+      return data as { txid: string };
+    },
+  });
+
+  const errorMessage = isAxiosError(mutation.error)
+    ? (mutation.error.response?.data?.message ?? 'Payout failed')
+    : mutation.error
+      ? 'Payout failed'
+      : null;
 
   return (
     <SectionCard title="Payout">
@@ -223,18 +215,18 @@ function SweepPanel({
         />
         <Box>
           <Button
-            onClick={handlePayout}
-            disabled={!address || loading}
-            loading={loading}
+            onClick={() => mutation.mutate()}
+            disabled={!address || mutation.isPending}
+            loading={mutation.isPending}
             color="red"
             variant="outline"
             size="xs"
             style={{ fontFamily: HEADING }}
           >
-            {loading ? 'Sending…' : `Sweep ${available} ${symbol}`}
+            {mutation.isPending ? 'Sending…' : `Sweep ${available} ${symbol}`}
           </Button>
         </Box>
-        {txid && (
+        {mutation.data && (
           <Alert
             color="green"
             radius="sm"
@@ -247,12 +239,12 @@ function SweepPanel({
               },
             }}
           >
-            Sent — txid: {txid}
+            Sent — txid: {mutation.data.txid}
           </Alert>
         )}
-        {error && (
+        {errorMessage && (
           <Alert color="red" radius="sm" p="sm">
-            {error}
+            {errorMessage}
           </Alert>
         )}
       </Stack>

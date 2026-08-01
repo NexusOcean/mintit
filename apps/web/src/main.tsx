@@ -13,11 +13,14 @@ import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Providers from './providers';
+import ChainGate from './components/ChainGate';
+import { PageLoader } from './components/PageLoader';
 
 const Login = lazy(() => import('./pages/Login'));
 const DashboardLayout = lazy(() => import('./pages/DashboardLayout'));
 const Overview = lazy(() => import('./pages/Overview'));
 const Invoices = lazy(() => import('./pages/Invoices'));
+const InvoiceNew = lazy(() => import('./pages/InvoiceNew'));
 const InvoiceDetail = lazy(() => import('./pages/InvoiceDetail'));
 const Wallet = lazy(() => import('./pages/Wallet'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -25,21 +28,24 @@ const Profile = lazy(() => import('./pages/Profile'));
 
 createRoot(document.getElementById('root')!).render(
   <Providers>
-    <BrowserRouter>
-      <Suspense>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route element={<DashboardLayout />}>
-            <Route index element={<Overview />} />
-            <Route path="invoices" element={<Invoices />} />
-            <Route path="invoices/:publicId" element={<InvoiceDetail />} />
-            <Route path="wallet" element={<Wallet />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+    <ChainGate>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<DashboardLayout />}>
+              <Route index element={<Overview />} />
+              <Route path="invoices" element={<Invoices />} />
+              <Route path="invoices/new" element={<InvoiceNew />} />
+              <Route path="invoices/:publicId" element={<InvoiceDetail />} />
+              <Route path="wallet" element={<Wallet />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ChainGate>
   </Providers>,
 );

@@ -10,6 +10,11 @@ export const api = axios.create({
   baseURL,
 });
 
+export function publicInvoiceUrl(publicId: string): string {
+  const apiOrigin = new URL(baseURL, window.location.origin).origin;
+  return `${apiOrigin}/i/${publicId}`;
+}
+
 api.interceptors.request.use((config) => {
   const token = Cookies.get(TOKEN_COOKIE);
   if (token) {

@@ -18,7 +18,7 @@ import {
 } from '@tabler/icons-react';
 import { isAxiosError } from 'axios';
 import { api } from '@/src/lib/api';
-import { useChain } from '@/src/context/ChainContext';
+import { useReadyChain } from '@/src/context/ChainContext';
 import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
 import type { HealthReadyDto, HealthSyncedDto } from '@mintit/types';
 
@@ -69,7 +69,7 @@ async function fetchStats(chain: string): Promise<Stats> {
 }
 
 export default function Overview() {
-  const { chain } = useChain();
+  const chain = useReadyChain();
 
   const { data, isLoading } = useQuery({
     queryKey: ['health', chain],

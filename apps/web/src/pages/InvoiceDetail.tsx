@@ -1,19 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import {
-  Anchor,
-  Group,
-  Paper,
-  Skeleton,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
+import { Anchor, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { api } from '@/src/lib/api';
 import type { InvoiceDto } from '@mintit/types';
 import { InvoicePanel } from '@/src/components/InvoicePanel';
+import { ShareInvoiceButton } from '@/src/components/ShareInvoiceButton';
 import { CARD_BORDER, HEADING, MUTED, PRIMARY } from '@/src/lib/theme';
+import { ErrorGuard } from '../components/ErrorGuard';
 
 async function fetchInvoice(publicId: string): Promise<InvoiceDto> {
   const { data } = await api.get(`/admin/invoices/${publicId}`);
@@ -33,9 +27,17 @@ export default function InvoiceDetail() {
     enabled: !!publicId,
   });
 
-  const metadataEntries = invoice?.metadata
-    ? Object.entries(invoice.metadata)
-    : [];
+  if (!invoice)
+    return (
+      <ErrorGuard
+        isLoading={isLoading}
+        isError={isError}
+        data={!!invoice}
+        redirectTo="/invoices"
+      />
+    );
+
+  const metadataEntries = Object.entries(invoice.metadata ?? {});
 
   return (
     <Stack gap="xl">
@@ -59,29 +61,41 @@ export default function InvoiceDetail() {
         Back to invoices
       </Anchor>
 
-      <Title
-        order={2}
-        style={{ fontFamily: HEADING, letterSpacing: '-0.02em' }}
+      <Group justify="space-between" align="center">
+        <Title
+          order={2}
+          style={{ fontFamily: HEADING, letterSpacing: '-0.02em' }}
+        >
+          Invoice
+        </Title>
+        <ShareInvoiceButton publicId={invoice.publicId} />
+      </Group>
+
+      <Paper
+        radius="sm"
+        p="md"
+        style={{
+          background: 'var(--mantine-color-dark-7)',
+          border: `1px solid ${CARD_BORDER}`,
+        }}
       >
-        Invoice
-      </Title>
+        <InvoicePanel invoice={invoice} />
+      </Paper>
 
-      {isLoading && (
-        <Stack gap="xs">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} height={28} radius="sm" />
-          ))}
-        </Stack>
-      )}
-
-      {isError && (
-        <Text size="sm" c="dimmed">
-          Failed to load invoice.
-        </Text>
-      )}
-
-      {invoice && (
-        <>
+      {metadataEntries.length > 0 && (
+        <Stack gap="sm">
+          <Text
+            style={{
+              fontFamily: HEADING,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: PRIMARY,
+            }}
+          >
+            {'// Metadata'}
+          </Text>
           <Paper
             radius="sm"
             p="md"
@@ -90,77 +104,48 @@ export default function InvoiceDetail() {
               border: `1px solid ${CARD_BORDER}`,
             }}
           >
-            <InvoicePanel invoice={invoice} />
-          </Paper>
-
-          {metadataEntries.length > 0 && (
-            <Stack gap="sm">
-              <Text
-                style={{
-                  fontFamily: HEADING,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: PRIMARY,
-                }}
-              >
-                {'// Metadata'}
-              </Text>
-              <Paper
-                radius="sm"
-                p="md"
-                style={{
-                  background: 'var(--mantine-color-dark-7)',
-                  border: `1px solid ${CARD_BORDER}`,
-                }}
-              >
-                <Stack gap={0}>
-                  {metadataEntries.map(([key, value]) => (
-                    <Group
-                      key={key}
-                      gap="md"
-                      py="xs"
-                      style={{
-                        borderBottom: `1px solid var(--mantine-color-dark-5)`,
-                      }}
-                      wrap="nowrap"
-                      align="flex-start"
-                    >
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          letterSpacing: '0.06em',
-                          textTransform: 'uppercase',
-                          color: MUTED,
-                          fontFamily: HEADING,
-                          width: 160,
-                          flexShrink: 0,
-                          wordBreak: 'break-all',
-                        }}
-                      >
-                        {key}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontFamily: HEADING,
-                          color: 'var(--mantine-color-dark-0)',
-                          wordBreak: 'break-all',
-                        }}
-                      >
-                        {typeof value === 'string'
-                          ? value
-                          : JSON.stringify(value)}
-                      </Text>
-                    </Group>
-                  ))}
-                </Stack>
-              </Paper>
+            <Stack gap={0}>
+              {metadataEntries.map(([key, value]) => (
+                <Group
+                  key={key}
+                  gap="md"
+                  py="xs"
+                  style={{
+                    borderBottom: `1px solid var(--mantine-color-dark-5)`,
+                  }}
+                  wrap="nowrap"
+                  align="flex-start"
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      color: MUTED,
+                      fontFamily: HEADING,
+                      width: 160,
+                      flexShrink: 0,
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {key}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontFamily: HEADING,
+                      color: 'var(--mantine-color-dark-0)',
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {typeof value === 'string' ? value : JSON.stringify(value)}
+                  </Text>
+                </Group>
+              ))}
             </Stack>
-          )}
-        </>
+          </Paper>
+        </Stack>
       )}
     </Stack>
   );
