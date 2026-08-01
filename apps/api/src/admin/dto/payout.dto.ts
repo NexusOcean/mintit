@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsString } from 'class-validator';
 import { Chain } from '@mintit/types';
 
 export class PayoutDto {
@@ -7,10 +7,9 @@ export class PayoutDto {
   @IsString()
   address: string;
 
-  @ApiPropertyOptional({ enum: Chain, example: Chain.Firo })
+  @ApiProperty({ enum: Chain, example: Chain.Firo })
   @IsEnum(Chain)
-  @IsOptional()
-  chain?: Chain;
+  chain: Chain;
 }
 export class PayoutResponseDto {
   @ApiProperty({ example: 'aee3b507ef84950062776442942668b6...' })

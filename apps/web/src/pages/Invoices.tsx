@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   ActionIcon,
+  Button,
   Group,
-  Modal,
   Paper,
+  Select,
   Skeleton,
   Stack,
   Table,
@@ -14,30 +15,21 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import {
   IconChevronLeft,
   IconChevronRight,
   IconExternalLink,
-  IconEye,
+  IconPlus,
   IconSearch,
 } from '@tabler/icons-react';
 import { api } from '@/src/lib/api';
-import {
-  InvoiceStatus,
-  type InvoiceDto,
-  type InvoiceListDto,
-} from '@mintit/types';
+import { Chain, InvoiceStatus, type InvoiceListDto } from '@mintit/types';
 import { useChain } from '@/src/context/ChainContext';
-import {
-  CARD_BORDER,
-  HEADING,
-  MUTED,
-  PRIMARY,
-  STATUS_COLORS,
-} from '@/src/lib/theme';
-import { fmt, formatAtomic } from '@/src/utils';
-import { InvoicePanel, StatusBadge } from '@/src/components/InvoicePanel';
+import { HEADING, MUTED, STATUS_COLORS } from '@/src/lib/theme';
+import { formatDate, formatAtomic } from '@/src/utils';
+import { StatusBadge } from '@/src/components/InvoicePanel';
+import { ShareInvoiceIcon } from '@/src/components/ShareInvoiceButton';
+import { PageLoader } from '../components/PageLoader';
 
 const STATUSES: InvoiceStatus[] = [
   InvoiceStatus.Pending,
@@ -54,7 +46,7 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function fetchInvoices(
-  chain: string,
+  chain: Chain | null,
   status: string | null,
   page: number,
   publicId?: string,
@@ -62,29 +54,39 @@ async function fetchInvoices(
   const { data } = await api.get('/admin/invoices', {
     params: publicId
       ? { publicId, page, limit: LIMIT }
-      : { chain, ...(status ? { status } : {}), page, limit: LIMIT },
+      : {
+          ...(chain ? { chain } : {}),
+          ...(status ? { status } : {}),
+          page,
+          limit: LIMIT,
+        },
   });
   return data;
 }
 
 export default function Invoices() {
-  const { chain } = useChain();
+  const { enabledChains } = useChain();
+  const [chainFilter, setChainFilter] = useState<Chain | null>(null);
   const [status, setStatus] = useState<InvoiceStatus | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<InvoiceDto | null>(null);
-  const [detailOpened, { open: openDetail, close: closeDetail }] =
-    useDisclosure(false);
 
   const publicId = UUID_RE.test(search.trim()) ? search.trim() : undefined;
   const searching = search.trim().length > 0;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['invoices', chain, status, page, publicId],
-    queryFn: () => fetchInvoices(chain, status, page, publicId),
+    queryKey: ['invoices', chainFilter, status, page, publicId],
+    queryFn: () => fetchInvoices(chainFilter, status, page, publicId),
     refetchInterval: 60_000,
-    enabled: !!chain && (!searching || !!publicId),
+    enabled: !searching || !!publicId,
   });
+
+  function handleChainFilter(value: string | null) {
+    setChainFilter((value as Chain) || null);
+    setPage(1);
+  }
+
+  if (isLoading) return <PageLoader />;
 
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 1;
 
@@ -98,31 +100,51 @@ export default function Invoices() {
     setPage(1);
   }
 
-  function handlePreview(inv: InvoiceDto) {
-    setSelected(inv);
-    openDetail();
-  }
-
   return (
     <Stack gap="xl">
       {/* Header */}
-      <Title
-        order={2}
-        style={{ fontFamily: HEADING, letterSpacing: '-0.02em' }}
-      >
-        Invoices
-      </Title>
+      <Group justify="space-between" align="center">
+        <Title
+          order={2}
+          style={{ fontFamily: HEADING, letterSpacing: '-0.02em' }}
+        >
+          Invoices
+        </Title>
+        <Button
+          component={Link}
+          to="/invoices/new"
+          leftSection={<IconPlus size={16} />}
+          size="xs"
+        >
+          New Invoice
+        </Button>
+      </Group>
 
-      <TextInput
-        placeholder="Search by public ID"
-        leftSection={<IconSearch size={14} />}
-        value={search}
-        onChange={(e) => handleSearchChange(e.currentTarget.value)}
-        minLength={36}
-        maxLength={36}
-        error={searching && !publicId ? 'Invalid public ID' : undefined}
-        styles={{ input: { fontFamily: HEADING, fontSize: 13 } }}
-      />
+      <Group gap="sm" align="flex-start">
+        <TextInput
+          placeholder="Search by Public ID"
+          leftSection={<IconSearch size={14} />}
+          value={search}
+          onChange={(e) => handleSearchChange(e.currentTarget.value)}
+          minLength={36}
+          maxLength={36}
+          error={searching && !publicId ? 'Invalid Public ID' : undefined}
+          styles={{ input: { fontFamily: HEADING, fontSize: 13 } }}
+          style={{ flex: 1 }}
+        />
+        <Select
+          placeholder="All chains"
+          data={enabledChains.map((c) => ({
+            value: c,
+            label: c.toUpperCase(),
+          }))}
+          value={chainFilter}
+          onChange={handleChainFilter}
+          clearable
+          disabled={searching}
+          styles={{ input: { fontFamily: HEADING, fontSize: 13, width: 140 } }}
+        />
+      </Group>
 
       {/* Status filters */}
       <Group gap="xs" style={{ opacity: searching ? 0.4 : 1 }}>
@@ -169,32 +191,38 @@ export default function Invoices() {
             <Table.Tr
               style={{ borderBottom: `1px solid var(--mantine-color-dark-5)` }}
             >
-              {['ID', 'Amount', 'Status', 'Created', 'Expires', ''].map(
-                (h, i) => (
-                  <Table.Th
-                    key={i}
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: MUTED,
-                      fontFamily: HEADING,
-                      padding: '12px 16px',
-                      borderBottom: 'none',
-                    }}
-                  >
-                    {h}
-                  </Table.Th>
-                ),
-              )}
+              {[
+                'Public ID',
+                'Chain',
+                'Amount',
+                'Status',
+                'Created',
+                'Expires',
+                '',
+              ].map((h, i) => (
+                <Table.Th
+                  key={i}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: MUTED,
+                    fontFamily: HEADING,
+                    padding: '12px 16px',
+                    borderBottom: 'none',
+                  }}
+                >
+                  {h}
+                </Table.Th>
+              ))}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <Table.Tr key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <Table.Td key={j} style={{ padding: '14px 16px' }}>
                       <Skeleton
                         height={12}
@@ -208,7 +236,7 @@ export default function Invoices() {
             ) : data?.data.length === 0 ? (
               <Table.Tr>
                 <Table.Td
-                  colSpan={6}
+                  colSpan={7}
                   style={{ padding: '40px 16px', textAlign: 'center' }}
                 >
                   <Text size="sm" c="dimmed">
@@ -228,6 +256,17 @@ export default function Invoices() {
                       }}
                     >
                       …{inv.publicId.slice(-8)}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td style={{ padding: '14px 16px' }}>
+                    <Text
+                      style={{
+                        fontFamily: HEADING,
+                        fontSize: 12,
+                        color: MUTED,
+                      }}
+                    >
+                      {inv.chain.toUpperCase()}
                     </Text>
                   </Table.Td>
                   <Table.Td style={{ padding: '14px 16px' }}>
@@ -255,7 +294,7 @@ export default function Invoices() {
                         fontFamily: HEADING,
                       }}
                     >
-                      {fmt(inv.createdAt)}
+                      {formatDate(inv.createdAt)}
                     </Text>
                   </Table.Td>
                   <Table.Td style={{ padding: '14px 16px' }}>
@@ -266,30 +305,23 @@ export default function Invoices() {
                         fontFamily: HEADING,
                       }}
                     >
-                      {fmt(inv.expiresAt)}
+                      {formatDate(inv.expiresAt)}
                     </Text>
                   </Table.Td>
                   <Table.Td
                     style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}
                   >
                     <Group gap={16} justify="flex-end" wrap="nowrap">
-                      <ActionIcon
-                        color="gray"
-                        size="md"
-                        aria-label="Preview"
-                        onClick={() => handlePreview(inv)}
-                      >
-                        <IconEye size={22} />
-                      </ActionIcon>
+                      <ShareInvoiceIcon publicId={inv.publicId} />
                       <ActionIcon
                         component={Link}
                         to={`/invoices/${inv.publicId}`}
-                        variant="secondary"
+                        variant="subtle"
                         color="gray"
                         size="md"
-                        aria-label="Open"
+                        aria-label="Open invoice detail"
                       >
-                        <IconExternalLink size={22} />
+                        <IconExternalLink size={20} />
                       </ActionIcon>
                     </Group>
                   </Table.Td>
@@ -336,38 +368,6 @@ export default function Invoices() {
           </UnstyledButton>
         </Group>
       </Group>
-
-      {/* Invoice detail modal */}
-      <Modal
-        opened={detailOpened}
-        onClose={closeDetail}
-        title={
-          <Text
-            style={{
-              fontFamily: HEADING,
-              fontSize: 16,
-              fontWeight: 600,
-              color: PRIMARY,
-            }}
-          >
-            {'// Invoice Detail'}
-          </Text>
-        }
-        size="lg"
-        radius="sm"
-        styles={{
-          content: {
-            background: 'var(--mantine-color-dark-7)',
-            border: `1px solid ${CARD_BORDER}`,
-          },
-          header: {
-            background: 'var(--mantine-color-dark-7)',
-            borderBottom: `1px solid var(--mantine-color-dark-5)`,
-          },
-        }}
-      >
-        {selected && <InvoicePanel invoice={selected} />}
-      </Modal>
     </Stack>
   );
 }

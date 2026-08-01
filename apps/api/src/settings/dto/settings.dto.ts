@@ -22,9 +22,6 @@ export class SettingsResponseDto extends GlobalSettingsResponseDto {
   @ApiProperty({ minimum: 60, description: 'Seconds' })
   invoiceDefaultExpirySec!: number;
 
-  @ApiProperty({ minimum: 60, description: 'Seconds' })
-  invoiceMaxExpirySec!: number;
-
   @ApiProperty({ minimum: 1000, description: 'Milliseconds' })
   scannerLockTtlMs!: number;
 
@@ -70,12 +67,6 @@ export class UpdateSettingsDto {
   @Min(60)
   @IsOptional()
   invoiceDefaultExpirySec?: number;
-
-  @ApiPropertyOptional({ minimum: 60 })
-  @IsInt()
-  @Min(60)
-  @IsOptional()
-  invoiceMaxExpirySec?: number;
 
   @ApiPropertyOptional({ minimum: 1000 })
   @IsInt()

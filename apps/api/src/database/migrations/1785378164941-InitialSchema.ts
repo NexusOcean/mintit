@@ -65,7 +65,7 @@ export class InitialSchema1785378164941 implements MigrationInterface {
       `CREATE INDEX "IDX_bd19542efe2e7166b97e3455db" ON "scanner_locks" ("expiresAt") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "settings" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "key" character varying NOT NULL, "confirmationDepth" integer, "invoiceDefaultExpirySec" integer, "invoiceMaxExpirySec" integer, "scannerLockTtlMs" integer, "syncedThresholdBlocks" integer, "rateCacheTtlMs" integer, "webhookMaxAttempts" integer, "webhookTimeoutMs" integer, "webhookDispatchIntervalMs" integer, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_c8639b7626fa94ba8265628f214" UNIQUE ("key"), CONSTRAINT "PK_0669fe20e252eb692bf4d344975" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "settings" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "key" character varying NOT NULL, "confirmationDepth" integer, "invoiceDefaultExpirySec" integer, "scannerLockTtlMs" integer, "syncedThresholdBlocks" integer, "rateCacheTtlMs" integer, "webhookMaxAttempts" integer, "webhookTimeoutMs" integer, "webhookDispatchIntervalMs" integer, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_c8639b7626fa94ba8265628f214" UNIQUE ("key"), CONSTRAINT "PK_0669fe20e252eb692bf4d344975" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."webhook_deliveries_chain_enum" AS ENUM('xmr', 'firo', 'pivx')`,

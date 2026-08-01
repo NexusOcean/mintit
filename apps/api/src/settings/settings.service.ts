@@ -17,7 +17,6 @@ export interface GlobalSettingsFields {
 export interface SettingsFields extends GlobalSettingsFields {
   confirmationDepth: number;
   invoiceDefaultExpirySec: number;
-  invoiceMaxExpirySec: number;
   scannerLockTtlMs: number;
   syncedThresholdBlocks: number;
 }
@@ -88,7 +87,6 @@ export class SettingsService implements OnModuleInit {
       ...this.getGlobal(),
       confirmationDepth: TUNABLE_DEFAULTS.CONFIRMATION_DEPTH,
       invoiceDefaultExpirySec: TUNABLE_DEFAULTS.INVOICE_DEFAULT_EXPIRY_SEC,
-      invoiceMaxExpirySec: TUNABLE_DEFAULTS.INVOICE_MAX_EXPIRY_SEC,
       scannerLockTtlMs: TUNABLE_DEFAULTS.SCANNER_LOCK_TTL_MS,
       syncedThresholdBlocks: TUNABLE_DEFAULTS.MONERO_SYNCED_THRESHOLD_BLOCKS,
     };
@@ -122,7 +120,6 @@ export class SettingsService implements OnModuleInit {
       ...this.projectGlobal(doc),
       confirmationDepth: doc.confirmationDepth!,
       invoiceDefaultExpirySec: doc.invoiceDefaultExpirySec!,
-      invoiceMaxExpirySec: doc.invoiceMaxExpirySec!,
       scannerLockTtlMs: doc.scannerLockTtlMs!,
       syncedThresholdBlocks: doc.syncedThresholdBlocks!,
     };

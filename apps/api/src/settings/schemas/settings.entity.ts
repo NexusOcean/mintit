@@ -21,9 +21,6 @@ export class Settings {
   invoiceDefaultExpirySec?: number;
 
   @Column({ type: 'int', nullable: true })
-  invoiceMaxExpirySec?: number;
-
-  @Column({ type: 'int', nullable: true })
   scannerLockTtlMs?: number;
 
   @Column({ type: 'int', nullable: true })

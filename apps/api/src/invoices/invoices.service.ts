@@ -38,15 +38,8 @@ export class InvoicesService {
     const chain = dto.chain;
 
     const defaultExpiry = this.settings.get(chain, 'invoiceDefaultExpirySec');
-    const maxExpiry = this.settings.get(chain, 'invoiceMaxExpirySec');
     const defaultConfirmations = this.settings.get(chain, 'confirmationDepth');
     const expiresIn = dto.expiresInSeconds ?? defaultExpiry;
-
-    if (expiresIn > maxExpiry) {
-      throw new BadRequestException(
-        `expiresInSeconds exceeds maximum (${maxExpiry})`,
-      );
-    }
 
     const { asset, decimals, symbol } = CHAIN_CONFIG[chain];
     // TODO: read from config BASE_FIAT_CURRENCY
