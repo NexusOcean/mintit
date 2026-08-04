@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "dotenvx run --env-file=.env.local -- turbo run dev",
-    "build": "dotenvx run --env-file=.env.local -- turbo run build",
-    "start": "dotenvx run --env-file=.env.local -- turbo run start",
+    "build": "dotenvx run --env-file=.env.prod -- turbo run build",
+    "start": "dotenvx run --env-file=.env.prod -- turbo run start",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "clean": "turbo run clean && rm -rf node_modules",
