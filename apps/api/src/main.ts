@@ -32,7 +32,7 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('v1', {
-    exclude: ['/i/:publicId', '/i/:publicId/status'],
+    exclude: ['/docs', '/i/:publicId', '/i/:publicId/status'],
   });
 
   app.useGlobalPipes(
