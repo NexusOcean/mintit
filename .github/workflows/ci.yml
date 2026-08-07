@@ -22,6 +22,8 @@ jobs:
 
       - run: cp .env.example.dev .env.local
 
+      - run: cp .env.example.prod .env.prod
+
       - run: pnpm exec prettier --check "**/*.{ts,tsx,json,md}"
 
       - run: pnpm lint
